@@ -2,7 +2,7 @@ export const metadata = {
     title: 'Política de Privacidad — Infopeso',
     description: 'Conoce cómo recopilamos, utilizamos y protegemos tu información en Infopeso.',
     alternates: {
-        canonical: 'https://infopeso.com/privacidad',
+        canonical: 'https://infopeso.com.ar/privacidad',
     }
 };
 
@@ -20,7 +20,7 @@ export default function Page() {
                     </p>
                     
                     <p>
-                        En Infopeso, accesible desde <strong>https://infopeso.com</strong>, una de nuestras prioridades principales es la privacidad de nuestros visitantes. Este documento de Política de Privacidad contiene tipos de información que son recopilados y registrados por Infopeso y cómo los utilizamos.
+                        En Infopeso, accesible desde <strong>https://infopeso.com.ar</strong>, una de nuestras prioridades principales es la privacidad de nuestros visitantes. Este documento de Política de Privacidad contiene tipos de información que son recopilados y registrados por Infopeso y cómo los utilizamos.
                     </p>
 
                     <h2 className="text-base font-bold pt-4" style={{ color: 'var(--text-primary)' }}>1. Archivos de Registro (Log Files)</h2>
@@ -55,7 +55,7 @@ export default function Page() {
 
                     <h2 className="text-base font-bold pt-4" style={{ color: 'var(--text-primary)' }}>7. Contacto</h2>
                     <p>
-                        Si tenés preguntas adicionales o requerís más información sobre nuestra Política de Privacidad, no dudes en ponerte en contacto con nosotros escribiendo a <strong style={{ color: 'var(--text-primary)' }}>contacto@infopeso.com</strong> o a través de nuestra cuenta de X en <a href="https://x.com/infopeso" className="underline" style={{ color: 'var(--accent)' }} target="_blank" rel="noopener noreferrer">@infopeso</a>.
+                        Si tenés preguntas adicionales o requerís más información sobre nuestra Política de Privacidad, no dudes en ponerte en contacto con nosotros a través de nuestra cuenta de X en <a href="https://x.com/infopeso" className="underline" style={{ color: 'var(--accent)' }} target="_blank" rel="noopener noreferrer">@infopeso</a>.
                     </p>
                 </div>
             </article>

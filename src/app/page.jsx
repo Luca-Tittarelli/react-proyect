@@ -7,14 +7,14 @@ export const metadata = {
     openGraph: {
         title: 'Infopeso — Dashboard Financiero',
         description: 'Dashboard financiero argentino. Estado del sistema económico, tasas, reservas, riesgo país y tipo de cambio en tiempo real.',
-        url: 'https://infopeso.com',
+        url: 'https://infopeso.com.ar',
         siteName: 'Infopeso',
         locale: 'es_AR',
         type: 'website',
-        images: [{ url: 'https://infopeso.com/logo.png' }],
+        images: [{ url: 'https://infopeso.com.ar/logo.png' }],
     },
     alternates: {
-        canonical: 'https://infopeso.com',
+        canonical: 'https://infopeso.com.ar',
     }
 };
 

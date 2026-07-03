@@ -7,14 +7,14 @@ export const metadata = {
     openGraph: {
         title: 'Indicadores Macroeconómicos de Argentina — Tasas, Reservas, Inflación — Infopeso',
         description: 'Seguimiento en tiempo real de los indicadores económicos clave de Argentina: inflación (INDEC), reservas del BCRA, tasa de política monetaria, PBI y base monetaria.',
-        url: 'https://infopeso.com/Economia',
+        url: 'https://infopeso.com.ar/Economia',
         siteName: 'Infopeso',
         locale: 'es_AR',
         type: 'website',
-        images: [{ url: 'https://infopeso.com/logo.png' }],
+        images: [{ url: 'https://infopeso.com.ar/logo.png' }],
     },
     alternates: {
-        canonical: 'https://infopeso.com/Economia',
+        canonical: 'https://infopeso.com.ar/Economia',
     }
 };
 

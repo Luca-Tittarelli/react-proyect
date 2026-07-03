@@ -21,14 +21,14 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title,
             description,
-            url: `https://infopeso.com/RentaFija/${id}`,
+            url: `https://infopeso.com.ar/RentaFija/${id}`,
             siteName: "Infopeso",
             locale: "es_AR",
             type: "website",
-            images: [{ url: "https://infopeso.com/logo.png" }],
+            images: [{ url: "https://infopeso.com.ar/logo.png" }],
         },
         alternates: {
-            canonical: `https://infopeso.com/RentaFija/${id}`,
+            canonical: `https://infopeso.com.ar/RentaFija/${id}`,
         }
     };
 }
@@ -55,19 +55,19 @@ export default async function Page({ params }) {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Inicio",
-                "item": "https://infopeso.com"
+                "item": "https://infopeso.com.ar"
             },
             {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Renta Fija",
-                "item": "https://infopeso.com/RentaFija"
+                "item": "https://infopeso.com.ar/RentaFija"
             },
             {
                 "@type": "ListItem",
                 "position": 3,
                 "name": bond.name,
-                "item": `https://infopeso.com/RentaFija/${id}`
+                "item": `https://infopeso.com.ar/RentaFija/${id}`
             }
         ]
     };

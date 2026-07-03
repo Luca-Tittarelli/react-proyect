@@ -20,14 +20,14 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title: meta.title,
             description: meta.description,
-            url: `https://infopeso.com/Cambios/${id}`,
+            url: `https://infopeso.com.ar/Cambios/${id}`,
             siteName: "Infopeso",
             locale: "es_AR",
             type: "website",
-            images: [{ url: "https://infopeso.com/logo.png" }],
+            images: [{ url: "https://infopeso.com.ar/logo.png" }],
         },
         alternates: {
-            canonical: `https://infopeso.com/Cambios/${id}`,
+            canonical: `https://infopeso.com.ar/Cambios/${id}`,
         }
     };
 }
@@ -116,19 +116,19 @@ export default async function Page({ params }) {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Inicio",
-                "item": "https://infopeso.com"
+                "item": "https://infopeso.com.ar"
             },
             {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Divisas",
-                "item": "https://infopeso.com/Cambios"
+                "item": "https://infopeso.com.ar/Cambios"
             },
             {
                 "@type": "ListItem",
                 "position": 3,
                 "name": meta.name,
-                "item": `https://infopeso.com/Cambios/${id}`
+                "item": `https://infopeso.com.ar/Cambios/${id}`
             }
         ]
     };

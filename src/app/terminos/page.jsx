@@ -2,7 +2,7 @@ export const metadata = {
     title: 'Términos de Servicio — Infopeso',
     description: 'Términos y condiciones de uso de la plataforma Infopeso.',
     alternates: {
-        canonical: 'https://infopeso.com/terminos',
+        canonical: 'https://infopeso.com.ar/terminos',
     }
 };
 
@@ -21,7 +21,7 @@ export default function Page() {
                     
                     <h2 className="text-base font-bold pt-2" style={{ color: 'var(--text-primary)' }}>1. Aceptación de los Términos</h2>
                     <p>
-                        Al acceder y utilizar el sitio web <strong>https://infopeso.com</strong> (en adelante, "Infopeso"), aceptas quedar vinculado por estos Términos de Servicio, todas las leyes y regulaciones aplicables, y aceptas que eres responsable del cumplimiento de las leyes locales aplicables. Si no estás de acuerdo con alguno de estos términos, tienes prohibido utilizar o acceder a este sitio.
+                        Al acceder y utilizar el sitio web <strong>https://infopeso.com.ar</strong> (en adelante, "Infopeso"), aceptas quedar vinculado por estos Términos de Servicio, todas las leyes y regulaciones aplicables, y aceptas que eres responsable del cumplimiento de las leyes locales aplicables. Si no estás de acuerdo con alguno de estos términos, tienes prohibido utilizar o acceder a este sitio.
                     </p>
 
                     <h2 className="text-base font-bold pt-4" style={{ color: 'var(--text-primary)' }}>2. Exclusión de Responsabilidad (Disclaimer)</h2>

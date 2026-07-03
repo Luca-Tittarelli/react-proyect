@@ -6,14 +6,14 @@ export const metadata = {
     openGraph: {
         title: 'Cotizaciones de Renta Fija — Bonos y Obligaciones Negociables — Infopeso',
         description: 'Cotizaciones en tiempo real y calculadora de TIR (XIRR) de Bonos Soberanos de Argentina (AL30, GD30, CER) y Obligaciones Negociables (ONs).',
-        url: 'https://infopeso.com/RentaFija',
+        url: 'https://infopeso.com.ar/RentaFija',
         siteName: 'Infopeso',
         locale: 'es_AR',
         type: 'website',
-        images: [{ url: 'https://infopeso.com/logo.png' }],
+        images: [{ url: 'https://infopeso.com.ar/logo.png' }],
     },
     alternates: {
-        canonical: 'https://infopeso.com/RentaFija',
+        canonical: 'https://infopeso.com.ar/RentaFija',
     }
 };
 

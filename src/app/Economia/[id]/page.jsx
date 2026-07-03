@@ -18,14 +18,14 @@ export async function generateMetadata({ params }) {
         openGraph: {
             title: meta.title,
             description: meta.description,
-            url: `https://infopeso.com/Economia/${id}`,
+            url: `https://infopeso.com.ar/Economia/${id}`,
             siteName: "Infopeso",
             locale: "es_AR",
             type: "website",
-            images: [{ url: "https://infopeso.com/logo.png" }],
+            images: [{ url: "https://infopeso.com.ar/logo.png" }],
         },
         alternates: {
-            canonical: `https://infopeso.com/Economia/${id}`,
+            canonical: `https://infopeso.com.ar/Economia/${id}`,
         }
     };
 }
@@ -41,7 +41,7 @@ export default async function Page({ params }) {
         "@type": "Dataset",
         "name": meta.dataset.name,
         "description": meta.description,
-        "url": `https://infopeso.com/Economia/${id}`,
+        "url": `https://infopeso.com.ar/Economia/${id}`,
         "creator": {
             "@type": "Organization",
             "name": "Infopeso"
@@ -70,19 +70,19 @@ export default async function Page({ params }) {
                 "@type": "ListItem",
                 "position": 1,
                 "name": "Inicio",
-                "item": "https://infopeso.com"
+                "item": "https://infopeso.com.ar"
             },
             {
                 "@type": "ListItem",
                 "position": 2,
                 "name": "Economía",
-                "item": "https://infopeso.com/Economia"
+                "item": "https://infopeso.com.ar/Economia"
             },
             {
                 "@type": "ListItem",
                 "position": 3,
                 "name": meta.title.split('—')[0].trim(),
-                "item": `https://infopeso.com/Economia/${id}`
+                "item": `https://infopeso.com.ar/Economia/${id}`
             }
         ]
     };

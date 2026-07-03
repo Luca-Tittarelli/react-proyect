@@ -2,7 +2,7 @@ export const metadata = {
     title: 'Contacto — Infopeso',
     description: 'Ponte en contacto con el equipo de Infopeso.',
     alternates: {
-        canonical: 'https://infopeso.com/contacto',
+        canonical: 'https://infopeso.com.ar/contacto',
     }
 };
 
@@ -14,17 +14,10 @@ export default function Page() {
                     Contacto
                 </h1>
                 <p className="text-sm leading-relaxed mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    ¿Tenés sugerencias, consultas comerciales, feedback técnico o encontraste algún error en los datos? Nos encantaría escucharte. Podés ponerte en contacto con nosotros a través de los siguientes canales oficiales:
+                    ¿Tenés sugerencias, consultas comerciales, feedback técnico o encontraste algún error en los datos? Nos encantaría escucharte. Podés ponerte en contacto con nosotros a través de nuestro canal oficial:
                 </p>
 
                 <div className="space-y-4">
-                    <div className="p-4 rounded-lg" style={{ background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
-                        <h2 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>Correo Electrónico</h2>
-                        <a href="mailto:contacto@infopeso.com" className="text-sm font-semibold hover:underline" style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
-                            contacto@infopeso.com
-                        </a>
-                    </div>
-
                     <div className="p-4 rounded-lg" style={{ background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
                         <h2 className="text-xs font-bold uppercase tracking-wider mb-1" style={{ color: 'var(--text-tertiary)' }}>X / Twitter Oficial</h2>
                         <a href="https://x.com/infopeso" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold hover:underline" style={{ color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>

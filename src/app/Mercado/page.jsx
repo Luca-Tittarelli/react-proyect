@@ -6,14 +6,14 @@ export const metadata = {
     openGraph: {
         title: 'Mercado Financiero en Tiempo Real — Acciones, Merval, Criptomonedas — Infopeso',
         description: 'Cotizaciones en tiempo real del S&P Merval, acciones argentinas, CEDEARs, mercados internacionales (S&P 500, Nasdaq), criptomonedas y commodities clave.',
-        url: 'https://infopeso.com/Mercado',
+        url: 'https://infopeso.com.ar/Mercado',
         siteName: 'Infopeso',
         locale: 'es_AR',
         type: 'website',
-        images: [{ url: 'https://infopeso.com/logo.png' }],
+        images: [{ url: 'https://infopeso.com.ar/logo.png' }],
     },
     alternates: {
-        canonical: 'https://infopeso.com/Mercado',
+        canonical: 'https://infopeso.com.ar/Mercado',
     }
 };
 

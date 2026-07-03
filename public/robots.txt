@@ -17,4 +17,4 @@ Allow: /
 User-agent: Bingbot
 Allow: /
 
-Sitemap: https://infopeso.com/sitemap.xml
+Sitemap: https://infopeso.com.ar/sitemap.xml

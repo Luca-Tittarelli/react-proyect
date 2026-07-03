@@ -27,7 +27,7 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://infopeso.com"),
+  metadataBase: new URL("https://infopeso.com.ar"),
   title: {
     default: "Infopeso — Datos económicos de Argentina",
     template: "%s — Infopeso",
@@ -80,8 +80,8 @@ const orgSchema = {
   "@context": "https://schema.org",
   "@type": "Organization",
   name: "Infopeso",
-  url: "https://infopeso.com",
-  logo: "https://infopeso.com/logo.png",
+  url: "https://infopeso.com.ar",
+  logo: "https://infopeso.com.ar/logo.png",
   description: "Datos económicos y cotizaciones de Argentina en tiempo real.",
   sameAs: ["https://x.com/infopeso"],
 };
@@ -90,7 +90,7 @@ const websiteSchema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
   name: "Infopeso",
-  url: "https://infopeso.com",
+  url: "https://infopeso.com.ar",
 };
 
 export default function RootLayout({ children }) {

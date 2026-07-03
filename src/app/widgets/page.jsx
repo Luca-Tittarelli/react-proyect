@@ -4,11 +4,11 @@ export const metadata = {
     title: 'Widgets Financieros Gratuitos para tu Web — Infopeso',
     description: 'Embebe cotizaciones del dólar en tiempo real en tu blog o sitio web de forma gratuita. Personalizable y fácil de integrar.',
     alternates: {
-        canonical: 'https://infopeso.com/widgets',
+        canonical: 'https://infopeso.com.ar/widgets',
     }
 };
 
-const EMBED_CODE = `<iframe src="https://infopeso.com/widgets/dolar" width="320" height="120" style="border:none; border-radius:12px; background:#171715;"></iframe>`;
+const EMBED_CODE = `<iframe src="https://infopeso.com.ar/widgets/dolar" width="320" height="120" style="border:none; border-radius:12px; background:#171715;"></iframe>`;
 
 export default function Page() {
     return (

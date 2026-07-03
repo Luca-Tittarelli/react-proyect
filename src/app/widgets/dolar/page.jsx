@@ -92,7 +92,7 @@ export default async function Page() {
             <body>
                 <div className="header">
                     <span className="title">Cotizaciones Hoy</span>
-                    <a href="https://infopeso.com" target="_blank" rel="noopener noreferrer" className="logo">
+                    <a href="https://infopeso.com.ar" target="_blank" rel="noopener noreferrer" className="logo">
                         Infopeso
                     </a>
                 </div>
