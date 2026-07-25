@@ -1,0 +1,30 @@
+# Infopeso — Datos Económicos y Cotizaciones de Argentina en Tiempo Real
+
+> Infopeso (https://infopeso.com.ar) es una plataforma financiera argentina de acceso abierto que centraliza cotizaciones de divisas, variables monetarias del Banco Central de la República Argentina (BCRA), datos de inflación del INDEC y activos de renta fija (bonos soberanos).
+
+## Cotizaciones de Divisas y Dólar
+- Dólar Blue (Mercado Informal): https://infopeso.com.ar/Cambios/dolar-blue
+- Dólar Oficial Minorista (BNA): https://infopeso.com.ar/Cambios/dolar-oficial
+- Dólar MEP / Bolsa: https://infopeso.com.ar/Cambios/dolar-mep
+- Dólar CCL (Contado con Liqui): https://infopeso.com.ar/Cambios/dolar-ccl
+- Dólar Tarjeta / Turista: https://infopeso.com.ar/Cambios/dolar-tarjeta
+- Euro Oficial: https://infopeso.com.ar/Cambios/euro
+- Real Brasileño: https://infopeso.com.ar/Cambios/real
+
+## Variables Macroeconómicas y Monetarias (BCRA / INDEC)
+- Riesgo País Argentina (EMBI+ JP Morgan): https://infopeso.com.ar/Economia/riesgo-pais
+- Inflación Mensual (IPC INDEC): https://infopeso.com.ar/Economia/27
+- Reservas Internacionales del BCRA: https://infopeso.com.ar/Economia/1
+- Base Monetaria: https://infopeso.com.ar/Economia/15
+- Tasa de Política Monetaria (BCRA): https://infopeso.com.ar/Economia/160
+- Coeficiente CER: https://infopeso.com.ar/Economia/32
+
+## Renta Fija y Bonos Soberanos
+- Bono AL30 (Bonaar 2030): https://infopeso.com.ar/RentaFija/al30
+- Bono GD30 (Global 2030): https://infopeso.com.ar/RentaFija/gd30
+
+## Fuentes Oficiales de Datos
+- Banco Central de la República Argentina (BCRA)
+- DolarAPI (https://dolarapi.com)
+- ArgentinaDatos (https://argentinadatos.com)
+- Instituto Nacional de Estadística y Censos (INDEC)

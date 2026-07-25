@@ -6,12 +6,12 @@ export default function sitemap() {
     const base = 'https://infopeso.com.ar';
     const today = new Date();
 
-    const staticRoutes = ['', '/Cambios', '/Economia', '/Mercado', '/RentaFija', '/Empresas', '/privacidad', '/terminos', '/contacto']
+    const staticRoutes = ['', '/Cambios', '/Cambios/calculadora-pesos-a-dolar-blue', '/Cambios/calculadora-dolar-tarjeta', '/Economia', '/Mercado', '/RentaFija', '/Empresas', '/privacidad', '/terminos', '/contacto']
         .map(route => ({
             url: `${base}${route}`,
             lastModified: today,
             changeFrequency: route === '' ? 'always' : ['/privacidad', '/terminos', '/contacto'].includes(route) ? 'monthly' : 'daily',
-            priority: route === '' ? 1.0 : ['/privacidad', '/terminos', '/contacto'].includes(route) ? 0.3 : 0.8,
+            priority: route === '' ? 1.0 : ['/Cambios/calculadora-pesos-a-dolar-blue', '/Cambios/calculadora-dolar-tarjeta'].includes(route) ? 0.9 : ['/privacidad', '/terminos', '/contacto'].includes(route) ? 0.3 : 0.8,
         }));
 
     const dynamicEconomia = Object.keys(variablesMetadata).map(id => ({

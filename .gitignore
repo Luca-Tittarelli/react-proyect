@@ -42,4 +42,5 @@ next-env.d.ts
 
 # legacy vite build
 /dist
-
+# GSC exports
+*Performance-on-Search*

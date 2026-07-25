@@ -14,11 +14,17 @@ export async function generateMetadata({ params }) {
     const id = resolvedParams.id;
     const meta = getCambioMetadata(id);
     if (!meta) return {};
+
+    const currencyData = await getCurrencyData(meta);
+    const dynamicTitle = currencyData && currencyData.venta && currencyData.compra
+        ? `${meta.name} Hoy: Venta $${currencyData.venta.toLocaleString('es-AR')} / Compra $${currencyData.compra.toLocaleString('es-AR')} — Infopeso`
+        : meta.title;
+
     return {
-        title: meta.title,
+        title: dynamicTitle,
         description: meta.description,
         openGraph: {
-            title: meta.title,
+            title: dynamicTitle,
             description: meta.description,
             url: `https://infopeso.com.ar/Cambios/${id}`,
             siteName: "Infopeso",

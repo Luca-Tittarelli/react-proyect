@@ -102,6 +102,63 @@ export function Footer() {
                 </div>
             </div>
 
+            {/* ── SEO Links Grid — Internal Linking for Indexation ──────── */}
+            <div className="border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-xs">
+                    <div>
+                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Divisas y Dólar
+                        </h4>
+                        <ul className="space-y-1.5">
+                            <li><Link href="/Cambios/dolar-blue" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar Blue Hoy</Link></li>
+                            <li><Link href="/Cambios/dolar-oficial" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar Oficial BNA</Link></li>
+                            <li><Link href="/Cambios/dolar-mep" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar MEP (Bolsa)</Link></li>
+                            <li><Link href="/Cambios/dolar-ccl" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar CCL (Contado con Liqui)</Link></li>
+                            <li><Link href="/Cambios/dolar-tarjeta" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar Tarjeta / Turista</Link></li>
+                            <li><Link href="/Cambios/euro" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Euro Oficial</Link></li>
+                            <li><Link href="/Cambios/real" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Real Brasileño</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Macroeconomía (BCRA / INDEC)
+                        </h4>
+                        <ul className="space-y-1.5">
+                            <li><Link href="/Economia/riesgo-pais" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Riesgo País Argentina</Link></li>
+                            <li><Link href="/Economia/27" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Inflación Mensual INDEC</Link></li>
+                            <li><Link href="/Economia/1" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Reservas Internacionales BCRA</Link></li>
+                            <li><Link href="/Economia/15" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Base Monetaria</Link></li>
+                            <li><Link href="/Economia/160" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Tasa de Política Monetaria</Link></li>
+                            <li><Link href="/Economia/32" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Coeficiente CER</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Mercados y Renta Fija
+                        </h4>
+                        <ul className="space-y-1.5">
+                            <li><Link href="/RentaFija/al30" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Bono AL30 (Bonaar 2030)</Link></li>
+                            <li><Link href="/RentaFija/gd30" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Bono GD30 (Global 2030)</Link></li>
+                            <li><Link href="/Mercado" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Mercado Financiero</Link></li>
+                            <li><Link href="/Empresas" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Acciones y CEDEARs</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Calculadoras y pSEO
+                        </h4>
+                        <ul className="space-y-1.5">
+                            <li><Link href="/Cambios/calculadora-pesos-a-dolar-blue" className="hover:underline" style={{ color: 'var(--accent)' }}>Calculadora Dólar Blue</Link></li>
+                            <li><Link href="/Cambios/calculadora-dolar-tarjeta" className="hover:underline" style={{ color: 'var(--accent)' }}>Calculadora Dólar Tarjeta</Link></li>
+                            <li><Link href="/" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Inicio — Dashboard</Link></li>
+                            <li><Link href="/Cambios" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Divisas</Link></li>
+                            <li><Link href="/Economia" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Macroeconomía</Link></li>
+                            <li><Link href="/RentaFija" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Renta Fija</Link></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             {/* ── Bottom bar ───────────────────────────────── */}
             <div
                 className="border-t"
