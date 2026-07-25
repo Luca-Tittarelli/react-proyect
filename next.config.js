@@ -1,16 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'www.infopeso.com.ar' }],
-        destination: 'https://infopeso.com.ar/:path*',
-        permanent: true,
-      },
-    ];
-  },
-
   // Proxy para Google News RSS (reemplaza el proxy de Vite + vercel.json catch-all)
   async rewrites() {
     return [
