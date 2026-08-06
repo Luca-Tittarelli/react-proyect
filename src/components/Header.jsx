@@ -36,6 +36,7 @@ export default function Header() {
         { to: '/RentaFija', label: 'Bonos', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
         { to: '/Cambios', label: 'Divisas', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
         { to: '/Empresas', label: 'Empresas', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
+        { to: '/Cartera', label: 'Cartera', icon: 'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
     ];
 
     const isActive = (path) =>
@@ -68,15 +69,44 @@ export default function Header() {
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-1">
-                    {navLinks.map(({ to, label }) => (
-                        <Link
-                            key={to}
-                            href={to}
-                            className={`nav-link px-3 py-1.5 rounded-md ${isActive(to) ? 'active' : ''}`}
-                        >
-                            {label}
-                        </Link>
-                    ))}
+                    {navLinks.map(({ to, label }) => {
+                        const active = isActive(to);
+                        const isCartera = to === '/Cartera';
+
+                        if (isCartera) {
+                            return (
+                                <Link
+                                    key={to}
+                                    href={to}
+                                    className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-300 border ml-2 flex items-center gap-1.5 hover:scale-105 active:scale-95"
+                                    style={{
+                                        background: active ? 'var(--accent)' : 'var(--accent-soft)',
+                                        color: active ? '#fff' : 'var(--accent)',
+                                        borderColor: 'var(--accent)',
+                                        boxShadow: active 
+                                            ? '0 4px 12px rgba(196, 123, 43, 0.25)' 
+                                            : '0 2px 8px rgba(196, 123, 43, 0.1)',
+                                    }}
+                                >
+                                    <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-current opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-current"></span>
+                                    </span>
+                                    {label}
+                                </Link>
+                            );
+                        }
+
+                        return (
+                            <Link
+                                key={to}
+                                href={to}
+                                className={`nav-link px-3 py-1.5 rounded-md ${active ? 'active' : ''}`}
+                            >
+                                {label}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
                 {/* Theme toggle */}
@@ -109,23 +139,35 @@ export default function Header() {
             >
                 {navLinks.map(({ to, label, icon }) => {
                     const active = isActive(to);
+                    const isCartera = to === '/Cartera';
                     return (
                         <Link
                             key={to}
                             href={to}
                             className="flex flex-col items-center justify-center w-full py-1 gap-1 relative active:scale-95 transition-transform"
-                            style={{ color: active ? 'var(--accent)' : 'var(--text-tertiary)' }}
+                            style={{ 
+                                color: active 
+                                    ? 'var(--accent)' 
+                                    : (isCartera ? 'var(--accent)' : 'var(--text-tertiary)') 
+                            }}
                         >
-                            {active && (
+                            {active ? (
                                 <span
                                     className="absolute inset-0 mx-auto rounded-xl -z-10"
                                     style={{ width: '48px', height: '44px', top: '-4px', background: 'var(--accent-soft)' }}
                                 />
+                            ) : (
+                                isCartera && (
+                                    <span
+                                        className="absolute inset-0 mx-auto rounded-xl -z-10 border border-dashed opacity-50"
+                                        style={{ width: '48px', height: '44px', top: '-4px', borderColor: 'var(--accent)', background: 'rgba(196, 123, 43, 0.03)' }}
+                                    />
+                                )
                             )}
-                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? "2.2" : "1.7"} className="transition-all duration-200">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active || (isCartera && !active) ? "2.2" : "1.7"} className="transition-all duration-200">
                                 <path strokeLinecap="round" strokeLinejoin="round" d={icon} />
                             </svg>
-                            <span className="text-[10px] font-medium tracking-tight">{label}</span>
+                            <span className={`text-[10px] tracking-tight ${isCartera ? 'font-bold' : 'font-medium'}`}>{label}</span>
                         </Link>
                     );
                 })}
