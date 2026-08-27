@@ -261,6 +261,69 @@ export const CATEGORIES = [
     }
 ];
 
+export const PRESETS = [
+    {
+        id: 'beginner',
+        name: 'Quiero empezar (Sólida & Diversificada)',
+        icon: 'leaf',
+        description: 'Activos de alta capitalización, márgenes comprobados y bajo riesgo relativo. Ideal para iniciar.',
+        holdings: [
+            { symbol: 'AAPL', weight: 40 },
+            { symbol: 'KO', weight: 30 },
+            { symbol: 'MELI', weight: 30 },
+        ],
+        highlight: true,
+    },
+    {
+        id: 'energia_arg',
+        name: 'Energía Argentina & Vaca Muerta',
+        icon: 'flame',
+        description: 'Enfoque en desarrollo no convencional, transporte de gas y generación eléctrica estratégica.',
+        holdings: [
+            { symbol: 'YPFD.BA', weight: 35 },
+            { symbol: 'VIST', weight: 30 },
+            { symbol: 'PAMP.BA', weight: 20 },
+            { symbol: 'TGSU2.BA', weight: 15 },
+        ],
+    },
+    {
+        id: 'tech_ia',
+        name: 'Big Tech & Inteligencia Artificial',
+        icon: 'cpu',
+        description: 'Líderes de software empresarial, chips aceleradores y plataformas digitales globales.',
+        holdings: [
+            { symbol: 'MSFT', weight: 25 },
+            { symbol: 'NVDA', weight: 25 },
+            { symbol: 'AAPL', weight: 20 },
+            { symbol: 'GOOGL', weight: 15 },
+            { symbol: 'META', weight: 15 },
+        ],
+    },
+    {
+        id: 'finanzas_fintech',
+        name: 'Finanzas & Disrupción Digital',
+        icon: 'bank',
+        description: 'Equilibrio entre bancos argentinos tradicionales y el mayor banco digital regional.',
+        holdings: [
+            { symbol: 'GGAL.BA', weight: 30 },
+            { symbol: 'BMA.BA', weight: 25 },
+            { symbol: 'NU', weight: 25 },
+            { symbol: 'MELI', weight: 20 },
+        ],
+    },
+    {
+        id: 'dividendos_defensiva',
+        name: 'Alto Dividendo & Defensiva',
+        icon: 'target',
+        description: 'Compañías con flujos de fondos predecibles y pago constante de dividendos.',
+        holdings: [
+            { symbol: 'KO', weight: 40 },
+            { symbol: 'CEPU.BA', weight: 30 },
+            { symbol: 'PAMP.BA', weight: 30 },
+        ],
+    }
+];
+
 export const getCompanyBySymbol = (symbol) => {
     for (const cat of CATEGORIES) {
         const found = cat.companies.find(c => c.symbol === symbol);
@@ -269,10 +332,291 @@ export const getCompanyBySymbol = (symbol) => {
     return null;
 };
 
-export const hasSector = (portfolioSymbols, sectorName) => {
-    if (!portfolioSymbols || portfolioSymbols.length === 0) return false;
-    return portfolioSymbols.some(sym => {
+export const hasSector = (portfolioHoldings, sectorName) => {
+    if (!portfolioHoldings || portfolioHoldings.length === 0) return false;
+    return portfolioHoldings.some(item => {
+        const sym = typeof item === 'string' ? item : item.symbol;
         const comp = getCompanyBySymbol(sym);
         return comp && comp.sector === sectorName;
     });
+};
+
+/**
+ * Normaliza cualquier formato de cartera a [{ symbol, weight }] donde sum(weight) === 100
+ */
+export const normalizeHoldings = (raw) => {
+    if (!raw || !Array.isArray(raw) || raw.length === 0) return [];
+
+    // Si es array de strings ['AAPL', 'MELI']
+    if (typeof raw[0] === 'string') {
+        const equalWeight = 100 / raw.length;
+        return raw.map(symbol => ({
+            symbol,
+            weight: Number(equalWeight.toFixed(2)),
+        }));
+    }
+
+    // Si es array de objetos [{ symbol, weight }]
+    const totalWeight = raw.reduce((sum, item) => sum + (Number(item.weight) || 0), 0);
+    if (totalWeight <= 0) {
+        const equalWeight = 100 / raw.length;
+        return raw.map(item => ({
+            symbol: item.symbol,
+            weight: Number(equalWeight.toFixed(2)),
+        }));
+    }
+
+    return raw.map(item => ({
+        symbol: item.symbol,
+        weight: Number(((Number(item.weight) / totalWeight) * 100).toFixed(2)),
+    }));
+};
+
+/**
+ * Calcula todas las métricas de fundamentals consolidadas de la cartera
+ */
+export const calculatePortfolioMetrics = (holdings, fundamentalsMap = {}) => {
+    const normalized = normalizeHoldings(holdings);
+    if (normalized.length === 0) {
+        return {
+            weightedPE: null,
+            weightedForwardPE: null,
+            weightedPriceToBook: null,
+            weightedEVToEbitda: null,
+            weightedROE: null,
+            weightedROA: null,
+            weightedOperatingMargin: null,
+            weightedProfitMargin: null,
+            weightedDividendYield: null,
+            weightedBeta: null,
+            weightedUpside: null,
+            sectorBreakdown: {},
+            geoBreakdown: {},
+            riskBreakdown: {},
+            hhi: 0,
+            healthScore: 50,
+            diagnostics: [],
+            upcomingEarnings: [],
+        };
+    }
+
+    let totalWeightValidPE = 0;
+    let sumWeightedInvPE = 0;
+
+    let totalWeightForwardPE = 0;
+    let sumForwardPE = 0;
+
+    let totalWeightPB = 0;
+    let sumPB = 0;
+
+    let totalWeightEV = 0;
+    let sumEV = 0;
+
+    let totalWeightROE = 0;
+    let sumROE = 0;
+
+    let totalWeightROA = 0;
+    let sumROA = 0;
+
+    let totalWeightOpMargin = 0;
+    let sumOpMargin = 0;
+
+    let totalWeightProfitMargin = 0;
+    let sumProfitMargin = 0;
+
+    let totalWeightDivYield = 0;
+    let sumDivYield = 0;
+
+    let totalWeightBeta = 0;
+    let sumBeta = 0;
+
+    let totalWeightUpside = 0;
+    let sumUpside = 0;
+
+    const sectorWeights = {};
+    const geoWeights = {};
+    const riskWeights = { bajo: 0, medio: 0, alto: 0, muy_alto: 0 };
+    let hhi = 0;
+    const upcomingEarnings = [];
+
+    normalized.forEach(item => {
+        const sym = item.symbol;
+        const w = (Number(item.weight) || 0) / 100;
+        const comp = getCompanyBySymbol(sym);
+        const data = fundamentalsMap[sym] || {};
+
+        const pct = w * 100;
+        hhi += pct * pct;
+
+        if (comp) {
+            sectorWeights[comp.sector] = (sectorWeights[comp.sector] || 0) + pct;
+            geoWeights[comp.category] = (geoWeights[comp.category] || 0) + pct;
+            const r = comp.riskLevel || 'medio';
+            riskWeights[r] = (riskWeights[r] || 0) + pct;
+        }
+
+        if (data.pe && data.pe > 0 && data.pe < 250) {
+            sumWeightedInvPE += w / data.pe;
+            totalWeightValidPE += w;
+        }
+
+        if (data.forwardPe && data.forwardPe > 0 && data.forwardPe < 250) {
+            sumForwardPE += w * data.forwardPe;
+            totalWeightForwardPE += w;
+        }
+
+        if (data.priceToBook && data.priceToBook > 0 && data.priceToBook < 100) {
+            sumPB += w * data.priceToBook;
+            totalWeightPB += w;
+        }
+
+        if (data.evToEbitda && data.evToEbitda > 0 && data.evToEbitda < 100) {
+            sumEV += w * data.evToEbitda;
+            totalWeightEV += w;
+        }
+
+        if (data.roe !== null && data.roe !== undefined && !isNaN(data.roe)) {
+            sumROE += w * data.roe;
+            totalWeightROE += w;
+        }
+
+        if (data.roa !== null && data.roa !== undefined && !isNaN(data.roa)) {
+            sumROA += w * data.roa;
+            totalWeightROA += w;
+        }
+
+        if (data.operatingMargin !== null && data.operatingMargin !== undefined && !isNaN(data.operatingMargin)) {
+            sumOpMargin += w * data.operatingMargin;
+            totalWeightOpMargin += w;
+        }
+
+        if (data.profitMargin !== null && data.profitMargin !== undefined && !isNaN(data.profitMargin)) {
+            sumProfitMargin += w * data.profitMargin;
+            totalWeightProfitMargin += w;
+        }
+
+        if (data.dividendYield !== null && data.dividendYield !== undefined && !isNaN(data.dividendYield)) {
+            sumDivYield += w * data.dividendYield;
+            totalWeightDivYield += w;
+        }
+
+        if (data.beta !== null && data.beta !== undefined && !isNaN(data.beta)) {
+            sumBeta += w * data.beta;
+            totalWeightBeta += w;
+        }
+
+        if (data.upsidePotential !== null && data.upsidePotential !== undefined && !isNaN(data.upsidePotential)) {
+            sumUpside += w * data.upsidePotential;
+            totalWeightUpside += w;
+        }
+
+        if (data.nextEarningsDate) {
+            upcomingEarnings.push({
+                symbol: sym,
+                name: comp?.name || sym,
+                date: data.nextEarningsDate,
+            });
+        }
+    });
+
+    upcomingEarnings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    const weightedPE = totalWeightValidPE > 0.2 ? totalWeightValidPE / sumWeightedInvPE : null;
+    const weightedForwardPE = totalWeightForwardPE > 0.2 ? sumForwardPE / totalWeightForwardPE : null;
+    const weightedPriceToBook = totalWeightPB > 0.2 ? sumPB / totalWeightPB : null;
+    const weightedEVToEbitda = totalWeightEV > 0.2 ? sumEV / totalWeightEV : null;
+    const weightedROE = totalWeightROE > 0.2 ? sumROE / totalWeightROE : null;
+    const weightedROA = totalWeightROA > 0.2 ? sumROA / totalWeightROA : null;
+    const weightedOperatingMargin = totalWeightOpMargin > 0.2 ? sumOpMargin / totalWeightOpMargin : null;
+    const weightedProfitMargin = totalWeightProfitMargin > 0.2 ? sumProfitMargin / totalWeightProfitMargin : null;
+    const weightedDividendYield = totalWeightDivYield > 0.2 ? sumDivYield / totalWeightDivYield : 0;
+    const weightedBeta = totalWeightBeta > 0.2 ? sumBeta / totalWeightBeta : 1.0;
+    const weightedUpside = totalWeightUpside > 0.2 ? sumUpside / totalWeightUpside : null;
+
+    const diagnostics = [];
+
+    if (weightedROE !== null) {
+        if (weightedROE >= 20) {
+            diagnostics.push({
+                type: 'positive',
+                title: 'Excelente Rentabilidad sobre Patrimonio (ROE)',
+                desc: `El ROE ponderado de la cartera es del ${weightedROE.toFixed(1)}%, reflejando alta eficiencia en la generación de ganancias sobre el capital accionario.`,
+            });
+        } else if (weightedROE < 10) {
+            diagnostics.push({
+                type: 'warning',
+                title: 'Rentabilidad Moderada/Baja',
+                desc: `El ROE ponderado es del ${weightedROE.toFixed(1)}%. Podrías considerar ponderar empresas con mayores márgenes y ventajas competitivas.`,
+            });
+        }
+    }
+
+    if (weightedPE !== null) {
+        if (weightedPE < 15) {
+            diagnostics.push({
+                type: 'positive',
+                title: 'Valuación Atractiva (Estilo Value)',
+                desc: `El múltiplo P/E promedio de la cartera se ubica en ${weightedPE.toFixed(1)}x, ofreciendo un margen de seguridad interesante frente a los promedios globales.`,
+            });
+        } else if (weightedPE > 35) {
+            diagnostics.push({
+                type: 'warning',
+                title: 'Valuación Exigente (Estilo Growth)',
+                desc: `Con un P/E ponderado de ${weightedPE.toFixed(1)}x, la cartera descuenta un crecimiento futuro acelerado, lo que puede incrementar la volatilidad ante reportes trimestrales.`,
+            });
+        }
+    }
+
+    const topSector = Object.entries(sectorWeights).sort((a, b) => b[1] - a[1])[0];
+    if (topSector && topSector[1] > 50) {
+        diagnostics.push({
+            type: 'warning',
+            title: `Concentración Sectorial en ${topSector[0]} (${topSector[1].toFixed(0)}%)`,
+            desc: `Más de la mitad de la cartera depende de un solo sector. Te sugerimos diversificar en otros rubros para mitigar riesgos sectoriales.`,
+        });
+    } else if (normalized.length >= 4 && hhi < 2500) {
+        diagnostics.push({
+            type: 'positive',
+            title: 'Buena Diversificación de Activos',
+            desc: 'La distribución de activos y sectores equilibra apropiadamente el riesgo no sistemático de cada empresa.',
+        });
+    }
+
+    if (weightedUpside !== null && weightedUpside > 12) {
+        diagnostics.push({
+            type: 'positive',
+            title: 'Potencial de Revalorización Positivo',
+            desc: `El consenso de analistas de Wall Street proyecta un potencial de suba promedio ponderado del +${weightedUpside.toFixed(1)}% para tus tenencias.`,
+        });
+    }
+
+    let healthScore = 60;
+    if (weightedROE && weightedROE > 18) healthScore += 12;
+    if (weightedOperatingMargin && weightedOperatingMargin > 15) healthScore += 10;
+    if (weightedPE && weightedPE < 25) healthScore += 8;
+    if (hhi < 2500) healthScore += 10;
+    if (topSector && topSector[1] > 55) healthScore -= 12;
+    if (normalized.length === 1) healthScore -= 20;
+    healthScore = Math.max(15, Math.min(98, healthScore));
+
+    return {
+        weightedPE,
+        weightedForwardPE,
+        weightedPriceToBook,
+        weightedEVToEbitda,
+        weightedROE,
+        weightedROA,
+        weightedOperatingMargin,
+        weightedProfitMargin,
+        weightedDividendYield,
+        weightedBeta,
+        weightedUpside,
+        sectorBreakdown: sectorWeights,
+        geoBreakdown: geoWeights,
+        riskBreakdown: riskWeights,
+        hhi,
+        healthScore,
+        diagnostics,
+        upcomingEarnings,
+    };
 };

@@ -1,117 +1,66 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useTheme } from '@/hooks/useTheme';
-import { CATEGORIES, getCompanyBySymbol, hasSector } from '@/utils/carteraData';
-import { MiniChart, CompanyProfile, FundamentalData, Timeline } from 'react-ts-tradingview-widgets';
+import {
+    CATEGORIES,
+    PRESETS,
+    getCompanyBySymbol,
+    hasSector,
+    normalizeHoldings,
+    calculatePortfolioMetrics,
+} from '@/utils/carteraData';
+import { MiniChart, CompanyProfile, FundamentalData } from 'react-ts-tradingview-widgets';
 
 // ─── Iconos SVG inline ────────────────────────────────────────────────────────
 const PATHS = {
-    search:      'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
-    x:           'M6 18L18 6M6 6l12 12',
-    check:       'M5 13l4 4L19 7',
-    plus:        'M12 4v16m8-8H4',
-    trash:       'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
-    edit:        'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z',
-    globe:       'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9',
-    mapPin:      'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
-    flame:       'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z',
-    bank:        'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
-    cpu:         'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
-    shoppingBag: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
-    arrowUp:     'M5 10l7-7m0 0l7 7m-7-7v18',
-    arrowDown:   'M19 14l-7 7m0 0l-7-7m7 7V3',
-    barChart:    'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
-    newspaper:   'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z',
-    target:      'M15 12a3 3 0 11-6 0 3 3 0 016 0z M19.07 4.93A10 10 0 1121 12h-1m-7.07-7.07A10 10 0 0112 2v1',
-    leaf:        'M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z',
-    bolt:        'M13 10V3L4 14h7v7l9-11h-7z',
-    trendingUp:  'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
-    clock:       'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
-    alertCircle: 'M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    chevronRight:'M9 5l7 7-7 7',
-    play:        'M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-    tv:          'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-    sparkle:     'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
-    megaphone:   'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z',
+    search:       'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z',
+    x:            'M6 18L18 6M6 6l12 12',
+    check:        'M5 13l4 4L19 7',
+    plus:         'M12 4v16m8-8H4',
+    trash:        'M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16',
+    edit:         'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z',
+    globe:        'M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9',
+    mapPin:       'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+    flame:        'M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z',
+    bank:         'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
+    cpu:          'M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18',
+    shoppingBag:  'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
+    arrowUp:      'M5 10l7-7m0 0l7 7m-7-7v18',
+    arrowDown:    'M19 14l-7 7m0 0l-7-7m7 7V3',
+    barChart:     'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z',
+    newspaper:    'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z',
+    target:       'M15 12a3 3 0 11-6 0 3 3 0 016 0z M19.07 4.93A10 10 0 1121 12h-1m-7.07-7.07A10 10 0 0112 2v1',
+    sparkle:      'M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z',
+    sliders:      'M4 21v-7m0-4V3m8 18v-9m0-4V3m8 18v-5m0-4V3M1 14h6m2-6h6m2 8h6',
+    pieChart:     'M21.21 15.89A10 10 0 118 2.83M22 12A10 10 0 0012 2v10z',
+    layers:       'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5',
+    shield:       'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+    calendar:     'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+    chevronLeft:  'M15 19l-7-7 7-7',
+    chevronRight: 'M9 5l7 7-7 7',
+    radio:        'M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm0-12a4 4 0 100 8 4 4 0 000-8z',
 };
 
-const Ico = ({ name, size = 14, className = '', strokeWidth = 2 }) => (
+const Ico = ({ name, size = 14, className = '', strokeWidth = 2, style = {} }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
          stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
-         className={`shrink-0 ${className}`}>
-        <path d={PATHS[name] || PATHS.alertCircle} />
+         style={style} className={`shrink-0 ${className}`}>
+        <path d={PATHS[name] || PATHS.sparkle} />
     </svg>
 );
 
-// Icono de sector
 const SectorIcon = ({ sector, size = 14 }) => {
     const map = {
-        'Energía y Commodities':   'flame',
-        'Finanzas y Fintech':      'bank',
-        'Tecnología y Crecimiento':'cpu',
-        'Consumo y Otros':         'shoppingBag',
+        'Energía y Commodities':    'flame',
+        'Finanzas y Fintech':       'bank',
+        'Tecnología y Crecimiento': 'cpu',
+        'Consumo y Otros':          'shoppingBag',
     };
     return <Ico name={map[sector] || 'sparkle'} size={size} />;
 };
 
-// ─── Presets ──────────────────────────────────────────────────────────────────
-const PRESETS = [
-    {
-        id: 'beginner',
-        name: 'Quiero empezar',
-        icon: 'leaf',
-        description: 'Tres activos sólidos y de bajo riesgo relativo. Ideal para dar el primer paso.',
-        symbols: ['AAPL', 'KO', 'MELI'],
-        highlight: true,
-    },
-    {
-        id: 'energia',
-        name: 'Energía Argentina',
-        icon: 'flame',
-        description: 'Foco en el desarrollo de Vaca Muerta, infraestructura y generación eléctrica.',
-        symbols: ['YPFD.BA', 'VIST', 'PAMP.BA', 'CEPU.BA'],
-    },
-    {
-        id: 'tech',
-        name: 'Big Tech Global',
-        icon: 'cpu',
-        description: 'Exposición a inteligencia artificial, e-commerce y software de escala global.',
-        symbols: ['MELI', 'AAPL', 'MSFT', 'NVDA', 'TSLA'],
-    },
-    {
-        id: 'finanzas',
-        name: 'Finanzas y Fintech',
-        icon: 'bank',
-        description: 'Banca tradicional argentina consolidada y disrupción digital fintech regional.',
-        symbols: ['GGAL.BA', 'BMA.BA', 'NU', 'MELI'],
-    },
-];
-
-// ─── Configuración de riesgo ──────────────────────────────────────────────────
-const RISK_CONFIG = {
-    bajo:     { label: 'Riesgo Bajo',     color: 'var(--positive)', bg: 'var(--positive-soft)' },
-    medio:    { label: 'Riesgo Medio',    color: 'var(--accent)',   bg: 'var(--accent-soft)'   },
-    alto:     { label: 'Riesgo Alto',     color: '#f59e0b',         bg: 'rgba(245,158,11,0.12)'},
-    muy_alto: { label: 'Riesgo Muy Alto', color: 'var(--negative)', bg: 'var(--negative-soft)' },
-};
-
-// ─── Helper semáforo ──────────────────────────────────────────────────────────
-const getSemaphoreFromTrend = (trend) => {
-    if (!trend) return 'unknown';
-    const bullish = (trend.strongBuy || 0) + (trend.buy || 0);
-    const bearish  = (trend.sell || 0) + (trend.strongSell || 0);
-    const neutral  = trend.hold || 0;
-    const total    = bullish + bearish + neutral;
-    if (total === 0) return 'unknown';
-    if (bullish >= total * 0.5) return 'buy';
-    if (bearish >= total * 0.4) return 'sell';
-    return 'hold';
-};
-
-// ─── Componentes ─────────────────────────────────────────────────────────────
-
-const CompanyLogo = ({ company, className = 'w-8 h-8' }) => {
+const CompanyLogo = ({ company, className = 'w-7 h-7' }) => {
     const [error, setError] = useState(false);
     useEffect(() => { setError(false); }, [company?.symbol]);
     if (!company) return null;
@@ -124,247 +73,500 @@ const CompanyLogo = ({ company, className = 'w-8 h-8' }) => {
     const c = colors[company.sector] || { bg: 'var(--bg-surface-hover)', color: 'var(--text-secondary)' };
     if (error || !company.logo) {
         return (
-            <div className={`${className} rounded-xl flex items-center justify-center font-extrabold text-sm shrink-0`}
-                 style={{ background: c.bg, color: c.color }}>
+            <div className={`${className} rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0`}
+                 style={{ background: c.bg, color: c.color, border: '1px solid var(--border-subtle)' }}>
                 {company.name.slice(0, 2).toUpperCase()}
             </div>
         );
     }
     return (
         <img src={company.logo} alt={company.name} loading="lazy" onError={() => setError(true)}
-             className={`${className} rounded-xl object-contain p-1 shrink-0`}
-             style={{ background: 'var(--bg-surface)' }} />
+             className={`${className} rounded-lg object-contain p-0.5 shrink-0`}
+             style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }} />
     );
 };
 
 const SemaphoreIndicator = ({ signal, size = 'sm' }) => {
     const cfg = {
-        buy:     { label: 'Comprar',  icon: 'arrowUp',   color: 'var(--positive)', bg: 'var(--positive-soft)' },
-        hold:    { label: 'Mantener', icon: 'trendingUp', color: 'var(--accent)',   bg: 'var(--accent-soft)'   },
+        buy:     { label: 'Comprar',  icon: 'arrowUp',    color: 'var(--positive)', bg: 'var(--positive-soft)' },
+        hold:    { label: 'Mantener', icon: 'sparkle',    color: 'var(--accent)',   bg: 'var(--accent-soft)'   },
         sell:    { label: 'Vender',   icon: 'arrowDown',  color: 'var(--negative)', bg: 'var(--negative-soft)' },
-        unknown: { label: '—',        icon: 'alertCircle',color: 'var(--text-tertiary)', bg: 'var(--bg-page)'  },
+        unknown: { label: '—',        icon: 'sparkle',    color: 'var(--text-tertiary)', bg: 'var(--bg-surface-hover)' },
     }[signal || 'unknown'];
     const px = size === 'xs' ? 'px-1.5 py-0.5 text-[9px] gap-0.5' : 'px-2 py-0.5 text-[10px] gap-1';
     return (
-        <span className={`${px} font-extrabold rounded-full inline-flex items-center`}
-              style={{ color: cfg.color, background: cfg.bg }}>
-            <Ico name={cfg.icon} size={size === 'xs' ? 9 : 10} />
+        <span className={`${px} font-bold rounded inline-flex items-center`}
+              style={{ color: cfg.color, background: cfg.bg, fontFamily: 'var(--font-mono)' }}>
+            <Ico name={cfg.icon} size={size === 'xs' ? 8 : 10} />
             {cfg.label}
         </span>
     );
 };
 
-const RiskBadge = ({ riskLevel }) => {
-    const cfg = RISK_CONFIG[riskLevel] || RISK_CONFIG.medio;
-    return (
-        <span title={cfg.label}
-              className="px-2 py-0.5 text-[9px] font-bold rounded-full flex items-center gap-1 w-fit"
-              style={{ color: cfg.color, background: cfg.bg }}>
-            <svg width="5" height="5" viewBox="0 0 5 5">
-                <circle cx="2.5" cy="2.5" r="2.5" fill="currentColor" />
-            </svg>
-            {cfg.label}
-        </span>
-    );
-};
+// ─── Slider de Noticias Estilo Bloomberg Terminal ─────────────────────────────
+const BloombergNewsSlider = ({ holdings }) => {
+    const [news, setNews] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isPaused, setIsPaused] = useState(false);
+    const [selectedFilter, setSelectedFilter] = useState('ALL');
 
-// ─── Wizard de Onboarding ─────────────────────────────────────────────────────
-const OnboardingWizard = ({ onComplete, onSkip }) => {
-    const [step, setStep] = useState(1);
-    const [region, setRegion] = useState(null);
-    const [sectors, setSectors] = useState([]);
-    const [suggestedSymbols, setSuggestedSymbols] = useState([]);
-    const [selected, setSelected] = useState([]);
+    useEffect(() => {
+        if (!holdings || holdings.length === 0) return;
+        let alive = true;
 
-    const sectorOptions = [
-        { id: 'Energía y Commodities',    label: 'Petróleo y Energía',   icon: 'flame',       desc: 'YPF, Vista Energy, Pampa...' },
-        { id: 'Finanzas y Fintech',       label: 'Bancos y Fintech',      icon: 'bank',        desc: 'Galicia, Nubank, BBVA...' },
-        { id: 'Tecnología y Crecimiento', label: 'Tecnología Global',     icon: 'cpu',         desc: 'Apple, NVIDIA, Google...' },
-        { id: 'Consumo y Otros',          label: 'Consumo e Industria',   icon: 'shoppingBag', desc: 'Coca-Cola, Loma Negra...' },
-    ];
+        const fetchPortfolioNews = async () => {
+            setLoading(true);
+            try {
+                // Generar query combinada de las empresas en cartera
+                const queries = holdings.map(h => {
+                    const comp = getCompanyBySymbol(h.symbol);
+                    return comp?.newsQuery || h.symbol;
+                });
+                
+                // Buscar noticias de los últimos 7 días
+                const queryStr = queries.slice(0, 8).join(' OR ');
+                const q = encodeURIComponent(`(${queryStr}) when:7d`);
+                const res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
+                if (!res.ok) throw new Error('Error en RSS');
+                const xml = await res.text();
+                const doc = new DOMParser().parseFromString(xml, 'application/xml');
+                const items = Array.from(doc.querySelectorAll('item')).slice(0, 15).map(item => {
+                    const title = (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, '');
+                    const link = item.querySelector('link')?.textContent || '#';
+                    const pubDate = item.querySelector('pubDate')?.textContent || '';
+                    const source = item.querySelector('source')?.textContent || 'Bloomberg';
 
-    const handleRegion = (r) => { setRegion(r); setStep(2); };
-    const toggleSector = (s) => setSectors(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
+                    let timeStr = '';
+                    if (pubDate) {
+                        const diff = Math.floor((Date.now() - new Date(pubDate)) / 1000);
+                        if (diff < 60) timeStr = 'ahora';
+                        else if (diff < 3600) timeStr = `${Math.floor(diff / 60)}m`;
+                        else if (diff < 86400) timeStr = `${Math.floor(diff / 3600)}h`;
+                        else timeStr = `${Math.floor(diff / 86400)}d`;
+                    }
 
-    const handleSectorNext = () => {
-        const cats = region === 'Argentina' ? ['Argentina'] : region === 'Internacional' ? ['Internacional'] : ['Argentina', 'Internacional'];
-        const all = CATEGORIES.filter(c => cats.includes(c.name)).flatMap(c => c.companies);
-        const filtered = sectors.length > 0 ? all.filter(c => sectors.includes(c.sector)) : all;
-        const order = { bajo: 0, medio: 1, alto: 2, muy_alto: 3 };
-        const sorted = [...filtered].sort((a, b) => (order[a.riskLevel] || 1) - (order[b.riskLevel] || 1));
-        const top6 = sorted.slice(0, 6).map(c => c.symbol);
-        setSuggestedSymbols(top6);
-        setSelected(sorted.slice(0, 3).map(c => c.symbol));
-        setStep(3);
+                    // Identificar qué empresa de la cartera coincide mejor con la noticia
+                    let matchedSymbol = holdings[0]?.symbol;
+                    for (const h of holdings) {
+                        const comp = getCompanyBySymbol(h.symbol);
+                        const lowerTitle = title.toLowerCase();
+                        if (
+                            lowerTitle.includes(h.symbol.toLowerCase().replace('.ba', '')) ||
+                            (comp && lowerTitle.includes(comp.name.toLowerCase()))
+                        ) {
+                            matchedSymbol = h.symbol;
+                            break;
+                        }
+                    }
+
+                    return {
+                        title,
+                        link,
+                        timeAgo: timeStr,
+                        source,
+                        symbol: matchedSymbol,
+                    };
+                });
+
+                if (alive) {
+                    setNews(items);
+                    setLoading(false);
+                }
+            } catch {
+                if (alive) setLoading(false);
+            }
+        };
+
+        fetchPortfolioNews();
+        return () => { alive = false; };
+    }, [holdings]);
+
+    // Filtrar noticias
+    const filteredNews = useMemo(() => {
+        if (selectedFilter === 'ALL') return news;
+        return news.filter(n => n.symbol === selectedFilter);
+    }, [news, selectedFilter]);
+
+    // Auto-advance slider cada 5 segundos si no está pausado
+    useEffect(() => {
+        if (isPaused || filteredNews.length <= 1) return;
+        const timer = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % filteredNews.length);
+        }, 4800);
+        return () => clearInterval(timer);
+    }, [isPaused, filteredNews.length]);
+
+    const handlePrev = () => {
+        if (filteredNews.length === 0) return;
+        setCurrentIndex(prev => (prev - 1 + filteredNews.length) % filteredNews.length);
     };
 
-    const regionOptions = [
-        { val: 'Argentina',     label: 'Mercado Argentino',    icon: 'mapPin' },
-        { val: 'Internacional', label: 'Mercado Internacional', icon: 'globe'  },
-        { val: 'Ambos',         label: 'Ambos mercados',       icon: 'sparkle' },
-    ];
+    const handleNext = () => {
+        if (filteredNews.length === 0) return;
+        setCurrentIndex(prev => (prev + 1) % filteredNews.length);
+    };
+
+    const currentItem = filteredNews[currentIndex] || filteredNews[0];
+    const comp = currentItem ? getCompanyBySymbol(currentItem.symbol) : null;
+
+    if (loading) {
+        return (
+            <div className="rounded-xl border p-2.5 flex items-center gap-3 animate-pulse"
+                 style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                <div className="w-20 h-5 bg-[var(--bg-surface-hover)] rounded" />
+                <div className="flex-1 h-5 bg-[var(--bg-surface-hover)] rounded" />
+            </div>
+        );
+    }
+
+    if (news.length === 0) return null;
+
+    return (
+        <div className="rounded-xl border overflow-hidden transition-all shadow-sm"
+             onMouseEnter={() => setIsPaused(true)}
+             onMouseLeave={() => setIsPaused(false)}
+             style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+            
+            {/* Barra Bloomberg Ticker */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 sm:px-4">
+                
+                {/* Badge Terminal Feed */}
+                <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--accent)] opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--accent)]" />
+                        </span>
+                        <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ fontFamily: 'var(--font-mono)' }}>
+                            TERMINAL FEED
+                        </span>
+                    </div>
+
+                    {/* Quick filter chips */}
+                    <div className="hidden md:flex items-center gap-1 overflow-x-auto">
+                        <button onClick={() => { setSelectedFilter('ALL'); setCurrentIndex(0); }}
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                    selectedFilter === 'ALL'
+                                        ? 'bg-[var(--accent)] text-white'
+                                        : 'bg-[var(--bg-page)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                                }`}>
+                            Todas
+                        </button>
+                        {holdings.slice(0, 5).map(h => (
+                            <button key={h.symbol}
+                                    onClick={() => { setSelectedFilter(h.symbol); setCurrentIndex(0); }}
+                                    className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all cursor-pointer ${
+                                        selectedFilter === h.symbol
+                                            ? 'bg-[var(--accent)] text-white'
+                                            : 'bg-[var(--bg-page)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)]'
+                                    }`}>
+                                {h.symbol}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Noticia Activa en el Slider */}
+                {currentItem && (
+                    <div className="flex-1 min-w-0 flex items-center gap-2 sm:mx-3">
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold uppercase shrink-0"
+                              style={{ background: 'var(--bg-page)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                            {currentItem.symbol}
+                        </span>
+
+                        <a href={currentItem.link} target="_blank" rel="noopener noreferrer"
+                           className="text-xs font-semibold truncate hover:text-[var(--accent)] transition-colors flex-1"
+                           style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}
+                           title={currentItem.title}>
+                            {currentItem.title}
+                        </a>
+
+                        <div className="flex items-center gap-1.5 shrink-0 text-[10px] opacity-70"
+                             style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                            <span className="hidden sm:inline font-medium">{currentItem.source}</span>
+                            <span>·</span>
+                            <span>{currentItem.timeAgo}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Controles de Navegación */}
+                <div className="flex items-center gap-1 self-end sm:self-center shrink-0">
+                    <span className="text-[10px] font-mono opacity-50 mr-1" style={{ color: 'var(--text-tertiary)' }}>
+                        {currentIndex + 1}/{filteredNews.length}
+                    </span>
+                    <button onClick={handlePrev}
+                            title="Noticia anterior"
+                            className="w-6 h-6 rounded flex items-center justify-center border cursor-pointer hover:bg-[var(--bg-surface-hover)] transition-colors"
+                            style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                        <Ico name="chevronLeft" size={11} />
+                    </button>
+                    <button onClick={handleNext}
+                            title="Siguiente noticia"
+                            className="w-6 h-6 rounded flex items-center justify-center border cursor-pointer hover:bg-[var(--bg-surface-hover)] transition-colors"
+                            style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                        <Ico name="chevronRight" size={11} />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─── Modal de Configuración y Ponderaciones ────────────────────────────────────
+const WeightsModal = ({ holdings, onSave, onClose }) => {
+    const [localHoldings, setLocalHoldings] = useState(() => normalizeHoldings(holdings));
+    const [searchQuery, setSearchQuery] = useState('');
+
+    const totalWeight = useMemo(() => {
+        return localHoldings.reduce((sum, h) => sum + (Number(h.weight) || 0), 0);
+    }, [localHoldings]);
+
+    const handleWeightChange = (symbol, val) => {
+        const num = Math.max(0, Math.min(100, Number(val) || 0));
+        setLocalHoldings(prev => prev.map(h => h.symbol === symbol ? { ...h, weight: num } : h));
+    };
+
+    const handleEquiponderar = () => {
+        if (localHoldings.length === 0) return;
+        const eq = Number((100 / localHoldings.length).toFixed(1));
+        setLocalHoldings(prev => prev.map(h => ({ ...h, weight: eq })));
+    };
+
+    const handleToggleCompany = (sym) => {
+        setLocalHoldings(prev => {
+            const exists = prev.some(h => h.symbol === sym);
+            if (exists) {
+                return normalizeHoldings(prev.filter(h => h.symbol !== sym));
+            } else {
+                return normalizeHoldings([...prev, { symbol: sym, weight: 10 }]);
+            }
+        });
+    };
+
+    const handleApplyPreset = (preset) => {
+        setLocalHoldings(preset.holdings);
+    };
+
+    const q = searchQuery.toLowerCase();
+    const availableCategories = CATEGORIES.map(cat => ({
+        ...cat,
+        companies: cat.companies.filter(c =>
+            c.name.toLowerCase().includes(q) ||
+            c.symbol.toLowerCase().includes(q) ||
+            c.sector.toLowerCase().includes(q)
+        )
+    })).filter(cat => cat.companies.length > 0);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-             style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(10px)' }}>
-            <div className="w-full max-w-md rounded-[28px] border overflow-hidden shadow-2xl"
+             style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+            <div className="w-full max-w-2xl rounded-2xl border overflow-hidden shadow-2xl flex flex-col max-h-[88vh]"
                  style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
 
-                <div className="p-6 border-b" style={{ borderColor: 'var(--border-subtle)', background: 'var(--accent-soft)' }}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
-                                Paso {step} de 3
-                            </p>
-                            <h2 className="text-xl font-extrabold mt-0.5" style={{ color: 'var(--text-primary)' }}>
-                                {step === 1 ? '¿Dónde querés invertir?' : step === 2 ? '¿Qué sector te interesa?' : 'Tu cartera sugerida'}
-                            </h2>
-                        </div>
-                        <button onClick={onSkip} className="flex items-center gap-1 text-[10px] font-bold cursor-pointer opacity-50 hover:opacity-100 transition-opacity"
-                                style={{ color: 'var(--text-secondary)' }}>
-                            Saltear <Ico name="chevronRight" size={10} />
-                        </button>
+                {/* Header */}
+                <div className="px-5 py-4 border-b flex items-center justify-between"
+                     style={{ borderColor: 'var(--border-subtle)' }}>
+                    <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em]"
+                           style={{ color: 'var(--accent)', fontFamily: 'var(--font-ui)' }}>
+                            Personalizar Cartera
+                        </p>
+                        <h2 className="text-lg font-bold"
+                            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+                            Elegí tus acciones y porcentajes
+                        </h2>
                     </div>
-                    <div className="mt-4 h-1.5 w-full rounded-full" style={{ background: 'var(--bg-page)' }}>
-                        <div className="h-full rounded-full transition-all duration-500"
-                             style={{ width: `${(step / 3) * 100}%`, background: 'var(--accent)' }} />
+                    <button onClick={onClose} className="p-1 rounded-lg hover:opacity-70 cursor-pointer"
+                            style={{ color: 'var(--text-tertiary)' }}>
+                        <Ico name="x" size={16} />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto p-5 space-y-6">
+
+                    {/* Presets rápidos */}
+                    <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] mb-2"
+                           style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                            Carteras Sugeridas (1 Clic)
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                            {PRESETS.map(p => (
+                                <button key={p.id} onClick={() => handleApplyPreset(p)}
+                                        className="p-2.5 rounded-xl border text-left cursor-pointer transition-all hover:bg-[var(--bg-surface-hover)]"
+                                        style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
+                                    <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                                        {p.name.split('(')[0]}
+                                    </p>
+                                    <p className="text-[10px] truncate mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                        {p.holdings.map(h => h.symbol).join(' · ')}
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Tus acciones seleccionadas */}
+                    <div>
+                        <div className="flex items-center justify-between mb-2">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                               style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                Tus Acciones ({localHoldings.length})
+                            </p>
+                            <button onClick={handleEquiponderar}
+                                    className="text-[11px] font-medium px-2 py-0.5 rounded border cursor-pointer hover:opacity-80"
+                                    style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-page)' }}>
+                                ⚖️ Repartir en partes iguales
+                            </button>
+                        </div>
+
+                        {localHoldings.length === 0 ? (
+                            <div className="p-6 text-center rounded-xl border border-dashed text-xs" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-tertiary)' }}>
+                                No hay acciones seleccionadas. Elegí una cartera sugerida o buscá abajo.
+                            </div>
+                        ) : (
+                            <div className="space-y-2">
+                                {localHoldings.map(h => {
+                                    const comp = getCompanyBySymbol(h.symbol);
+                                    return (
+                                        <div key={h.symbol}
+                                             className="p-2.5 rounded-xl border flex items-center gap-3"
+                                             style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
+                                            <CompanyLogo company={comp} className="w-7 h-7" />
+                                            <div className="w-28 min-w-0">
+                                                <p className="text-xs font-bold truncate" style={{ color: 'var(--text-primary)' }}>
+                                                    {comp?.name || h.symbol}
+                                                </p>
+                                                <p className="text-[9px]" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                                                    {h.symbol}
+                                                </p>
+                                            </div>
+
+                                            <div className="flex-1 flex items-center gap-3">
+                                                <input type="range" min="1" max="100" value={h.weight}
+                                                       onChange={e => handleWeightChange(h.symbol, e.target.value)}
+                                                       className="flex-1 cursor-pointer accent-[var(--accent)]" />
+                                                <div className="flex items-center gap-0.5">
+                                                    <input type="number" min="1" max="100" value={h.weight}
+                                                           onChange={e => handleWeightChange(h.symbol, e.target.value)}
+                                                           className="w-12 py-0.5 px-1 rounded text-xs font-medium text-center border outline-none"
+                                                           style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }} />
+                                                    <span className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>%</span>
+                                                </div>
+                                            </div>
+
+                                            <button onClick={() => handleToggleCompany(h.symbol)}
+                                                    className="opacity-40 hover:opacity-100 hover:text-red-500 cursor-pointer p-1">
+                                                <Ico name="trash" size={13} />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Catálogo de acciones */}
+                    <div className="space-y-3 pt-3 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                           style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                            Agregar otras acciones al portafolio
+                        </p>
+
+                        <div className="relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }}>
+                                <Ico name="search" size={13} />
+                            </span>
+                            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
+                                   placeholder="Buscar por nombre o ticker… (ej: YPF, Apple, bancos)"
+                                   className="w-full pl-8 pr-7 py-1.5 rounded-lg text-xs outline-none border"
+                                   style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }} />
+                            {searchQuery && (
+                                <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 opacity-40 hover:opacity-100">
+                                    <Ico name="x" size={12} />
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="space-y-3 max-h-48 overflow-y-auto pr-1">
+                            {availableCategories.map(cat => (
+                                <div key={cat.name} className="space-y-1.5">
+                                    <p className="text-[10px] font-medium opacity-60" style={{ color: 'var(--text-tertiary)' }}>
+                                        {cat.name}
+                                    </p>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                                        {cat.companies.map(c => {
+                                            const isSelected = localHoldings.some(h => h.symbol === c.symbol);
+                                            return (
+                                                <button key={c.symbol} onClick={() => handleToggleCompany(c.symbol)}
+                                                        className="p-1.5 rounded-lg border text-left cursor-pointer transition-all flex items-center gap-2 hover:bg-[var(--bg-surface-hover)]"
+                                                        style={{
+                                                            background: isSelected ? 'var(--accent-soft)' : 'var(--bg-page)',
+                                                            borderColor: isSelected ? 'var(--accent)' : 'var(--border-subtle)',
+                                                        }}>
+                                                    <CompanyLogo company={c} className="w-5 h-5 text-[8px]" />
+                                                    <span className="text-[11px] font-medium truncate flex-1" style={{ color: 'var(--text-primary)' }}>
+                                                        {c.name}
+                                                    </span>
+                                                    <Ico name={isSelected ? 'check' : 'plus'} size={11}
+                                                         style={{ color: isSelected ? 'var(--accent)' : 'var(--text-tertiary)' }} />
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
 
-                <div className="p-6 space-y-3 max-h-[70vh] overflow-y-auto">
-                    {step === 1 && regionOptions.map(opt => (
-                        <button key={opt.val} onClick={() => handleRegion(opt.val)}
-                                className="w-full p-4 rounded-2xl border-2 text-left cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-3"
-                                style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-page)' }}>
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                 style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                                <Ico name={opt.icon} size={18} />
-                            </div>
-                            <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{opt.label}</span>
-                            <Ico name="chevronRight" size={14} className="ml-auto opacity-40" />
+                {/* Footer */}
+                <div className="px-5 py-3 border-t flex items-center justify-between"
+                     style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-page)' }}>
+                    <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        Total: <strong style={{ color: totalWeight === 100 ? 'var(--positive)' : 'var(--accent)', fontFamily: 'var(--font-mono)' }}>{totalWeight.toFixed(0)}%</strong>
+                    </span>
+                    <div className="flex gap-2">
+                        <button onClick={onClose}
+                                className="px-3 py-1.5 rounded-lg text-xs border cursor-pointer hover:opacity-70"
+                                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
+                            Cancelar
                         </button>
-                    ))}
-
-                    {step === 2 && (
-                        <>
-                            {sectorOptions.map(s => (
-                                <button key={s.id} onClick={() => toggleSector(s.id)}
-                                        className="w-full p-3.5 rounded-2xl border-2 text-left cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-3"
-                                        style={{
-                                            borderColor: sectors.includes(s.id) ? 'var(--accent)' : 'var(--border-subtle)',
-                                            background:  sectors.includes(s.id) ? 'var(--accent-soft)' : 'var(--bg-page)',
-                                        }}>
-                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                                         style={{ background: sectors.includes(s.id) ? 'var(--accent)' : 'var(--bg-surface)', color: sectors.includes(s.id) ? 'white' : 'var(--text-secondary)' }}>
-                                        <Ico name={s.icon} size={18} />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{s.label}</p>
-                                        <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{s.desc}</p>
-                                    </div>
-                                    {sectors.includes(s.id) && <Ico name="check" size={16} style={{ color: 'var(--accent)' }} />}
-                                </button>
-                            ))}
-                            <button onClick={handleSectorNext}
-                                    className="w-full py-3 rounded-2xl font-bold text-sm cursor-pointer transition-all hover:opacity-90 flex items-center justify-center gap-2"
-                                    style={{ background: 'var(--accent)', color: 'white' }}>
-                                Ver sugerencias <Ico name="chevronRight" size={14} />
-                            </button>
-                        </>
-                    )}
-
-                    {step === 3 && (
-                        <>
-                            {suggestedSymbols.map(sym => {
-                                const company = getCompanyBySymbol(sym);
-                                if (!company) return null;
-                                const isSel = selected.includes(sym);
-                                return (
-                                    <button key={sym} onClick={() => setSelected(p => p.includes(sym) ? p.filter(s => s !== sym) : [...p, sym])}
-                                            className="w-full p-3 rounded-2xl border-2 text-left cursor-pointer transition-all hover:scale-[1.02] flex items-center gap-3"
-                                            style={{ borderColor: isSel ? 'var(--accent)' : 'var(--border-subtle)', background: isSel ? 'var(--accent-soft)' : 'var(--bg-page)' }}>
-                                        <CompanyLogo company={company} className="w-9 h-9" />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="font-bold text-xs" style={{ color: 'var(--text-primary)' }}>{company.name}</p>
-                                            <p className="text-[10px] truncate" style={{ color: 'var(--text-secondary)' }}>{company.description?.slice(0, 60)}…</p>
-                                        </div>
-                                        <div className="flex flex-col items-end gap-1">
-                                            <RiskBadge riskLevel={company.riskLevel} />
-                                            {isSel && <Ico name="check" size={14} style={{ color: 'var(--accent)' }} />}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                            <button onClick={() => onComplete(selected)} disabled={selected.length === 0}
-                                    className="w-full py-3.5 rounded-2xl font-extrabold text-sm cursor-pointer transition-all hover:opacity-90 disabled:opacity-40 flex items-center justify-center gap-2 mt-2"
-                                    style={{ background: 'var(--accent)', color: 'white' }}>
-                                <Ico name="check" size={14} />
-                                Crear cartera con {selected.length} activo{selected.length !== 1 ? 's' : ''}
-                            </button>
-                        </>
-                    )}
+                        <button onClick={() => onSave(localHoldings)} disabled={localHoldings.length === 0}
+                                className="px-4 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-all disabled:opacity-40"
+                                style={{ background: 'var(--accent)', color: 'white' }}>
+                            Guardar Cartera
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
-
-// ─── Tarjeta de empresa (en el selector) ─────────────────────────────────────
-const CompanyCard = ({ company, isSelected, onToggle, semaphoreSignal }) => (
-    <button onClick={() => onToggle(company.symbol)}
-            className="w-full text-left p-3 rounded-2xl border-2 transition-all duration-200 cursor-pointer hover:scale-[1.02] hover:shadow-md"
-            style={{
-                borderColor: isSelected ? 'var(--accent)' : 'var(--border-subtle)',
-                background:  isSelected ? 'var(--accent-soft)' : 'var(--bg-surface)',
-            }}>
-        <div className="flex items-center gap-2.5">
-            <CompanyLogo company={company} className="w-9 h-9" />
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-xs font-extrabold truncate" style={{ color: 'var(--text-primary)' }}>{company.name}</span>
-                    {isSelected && semaphoreSignal && semaphoreSignal !== 'unknown' &&
-                        <SemaphoreIndicator signal={semaphoreSignal} size="xs" />}
-                </div>
-                <p className="text-[10px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>{company.symbol}</p>
-            </div>
-            <div className="text-right shrink-0 flex items-center gap-1" style={{ color: isSelected ? 'var(--accent)' : 'var(--text-tertiary)' }}>
-                <Ico name={isSelected ? 'check' : 'plus'} size={12} />
-                <span className="text-[10px] font-bold">{isSelected ? 'En cartera' : 'Agregar'}</span>
-            </div>
-        </div>
-        <div className="mt-1.5">
-            <RiskBadge riskLevel={company.riskLevel} />
-        </div>
-    </button>
-);
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
 export default function CarteraClient() {
     const [theme] = useTheme();
-    const [portfolio, setPortfolio] = useState([]);
-    const [isEditing, setIsEditing] = useState(false);
+    const [holdings, setHoldings] = useState([]);
     const [detailSymbol, setDetailSymbol] = useState('');
     const [isMounted, setIsMounted] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [showOnboarding, setShowOnboarding] = useState(false);
+    const [showWeightsModal, setShowWeightsModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'table' | 'detail'
 
-    // Noticias
+    // Fundamentals Data Engine
+    const [fundamentalsMap, setFundamentalsMap] = useState({});
+    const [loadingFundamentals, setLoadingFundamentals] = useState(false);
+
+    // Deep Dive News
     const [googleNews, setGoogleNews] = useState([]);
     const [newsLoading, setNewsLoading] = useState(false);
-    const [newsError, setNewsError] = useState(false);
-    const [newsTab, setNewsTab] = useState('google');
 
-    // Analistas
-    const [analystData, setAnalystData] = useState(null);
-    const [analystsLoading, setAnalystsLoading] = useState(false);
-    const [analystsError, setAnalystsError] = useState(false);
-
-    // Cache semáforos cartera
-    const [semaphoreCache, setSemaphoreCache] = useState({});
-
-    // ── Mount ─────────────────────────────────────────────────────────────────
+    // ── Mount & LocalStorage ──────────────────────────────────────────────────
     useEffect(() => {
         setIsMounted(true);
         const stored = localStorage.getItem('infopeso_portfolio');
@@ -372,71 +574,83 @@ export default function CarteraClient() {
             try {
                 const parsed = JSON.parse(stored);
                 if (Array.isArray(parsed) && parsed.length > 0) {
-                    setPortfolio(parsed);
-                    setDetailSymbol(parsed[0]);
-                } else {
-                    setShowOnboarding(true);
+                    const normalized = normalizeHoldings(parsed);
+                    setHoldings(normalized);
+                    setDetailSymbol(normalized[0].symbol);
+                    return;
                 }
-            } catch { setShowOnboarding(true); }
-        } else {
-            setShowOnboarding(true);
+            } catch {
+                // fall through
+            }
         }
+        const defaultPreset = PRESETS[0].holdings;
+        setHoldings(defaultPreset);
+        setDetailSymbol(defaultPreset[0].symbol);
     }, []);
 
-    const savePortfolio = (next) => {
-        setPortfolio(next);
-        localStorage.setItem('infopeso_portfolio', JSON.stringify(next));
-        if (next.length > 0 && !next.includes(detailSymbol)) setDetailSymbol(next[0]);
-    };
-
-    const toggleCompany = (sym) => savePortfolio(portfolio.includes(sym) ? portfolio.filter(s => s !== sym) : [...portfolio, sym]);
-    const applyPreset   = (syms) => { savePortfolio(syms); setDetailSymbol(syms[0]); setIsEditing(false); };
-    const clearPortfolio = () => {
-        if (window.confirm('¿Borrar todos los activos de tu cartera?')) {
-            savePortfolio([]); setDetailSymbol(''); setShowOnboarding(true);
+    const saveHoldings = (nextHoldings) => {
+        const normalized = normalizeHoldings(nextHoldings);
+        setHoldings(normalized);
+        localStorage.setItem('infopeso_portfolio', JSON.stringify(normalized));
+        if (normalized.length > 0 && !normalized.some(h => h.symbol === detailSymbol)) {
+            setDetailSymbol(normalized[0].symbol);
         }
     };
 
-    const activeCompany = getCompanyBySymbol(detailSymbol) ||
-        (portfolio.length > 0 ? getCompanyBySymbol(portfolio[0]) : null);
+    const clearPortfolio = () => {
+        if (window.confirm('¿Deseas reiniciar tu cartera a la sugerencia inicial?')) {
+            saveHoldings(PRESETS[0].holdings);
+        }
+    };
 
-    // ── Semáforos de toda la cartera ──────────────────────────────────────────
+    // ── Fetch Fundamentals ────────────────────────────────────────────────────
     useEffect(() => {
-        if (!isMounted || portfolio.length === 0) return;
-        const toFetch = portfolio.filter(sym => !semaphoreCache[sym]);
-        if (toFetch.length === 0) return;
-        const run = async () => {
-            const results = {};
-            await Promise.allSettled(toFetch.map(async (sym) => {
-                const comp = getCompanyBySymbol(sym);
-                if (!comp) { results[sym] = 'unknown'; return; }
-                const clean = comp.tvSymbol.includes(':') ? comp.tvSymbol.split(':')[1] : comp.tvSymbol;
-                try {
-                    const res = await fetch(`/api/analysts?symbol=${encodeURIComponent(clean)}`);
-                    const data = await res.json();
-                    results[sym] = getSemaphoreFromTrend(data.trend);
-                } catch { results[sym] = 'unknown'; }
-            }));
-            setSemaphoreCache(p => ({ ...p, ...results }));
-        };
-        run();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [portfolio, isMounted]);
+        if (!isMounted || holdings.length === 0) return;
+        let alive = true;
 
-    // ── Google News ───────────────────────────────────────────────────────────
+        const fetchFundamentals = async () => {
+            setLoadingFundamentals(true);
+            try {
+                const symbols = holdings.map(h => h.symbol).join(',');
+                const res = await fetch(`/api/portfolio-fundamentals?symbols=${encodeURIComponent(symbols)}`);
+                if (!res.ok) throw new Error('Error en API');
+                const data = await res.json();
+                if (alive && data.fundamentals) {
+                    setFundamentalsMap(data.fundamentals);
+                }
+            } catch (err) {
+                console.warn('Error cargando fundamentals:', err.message);
+            } finally {
+                if (alive) setLoadingFundamentals(false);
+            }
+        };
+
+        fetchFundamentals();
+        return () => { alive = false; };
+    }, [holdings, isMounted]);
+
+    // ── Métricas Consolidadas ────────────────────────────────────────────────
+    const metrics = useMemo(() => {
+        return calculatePortfolioMetrics(holdings, fundamentalsMap);
+    }, [holdings, fundamentalsMap]);
+
+    const activeCompany = getCompanyBySymbol(detailSymbol) ||
+        (holdings.length > 0 ? getCompanyBySymbol(holdings[0].symbol) : null);
+    const activeFundamentals = activeCompany ? fundamentalsMap[activeCompany.symbol] || {} : {};
+
+    // ── Google News para Deep Dive ────────────────────────────────────────────
     useEffect(() => {
         if (!activeCompany) return;
         let alive = true;
-        const run = async () => {
-            setNewsLoading(true); setNewsError(false); setGoogleNews([]);
+        const fetchNews = async () => {
+            setNewsLoading(true); setGoogleNews([]);
             try {
                 const q = encodeURIComponent(`${activeCompany.newsQuery} when:7d`);
                 const res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
                 if (!res.ok) throw new Error();
                 const xml = await res.text();
                 const doc = new DOMParser().parseFromString(xml, 'application/xml');
-                if (doc.querySelector('parsererror')) throw new Error();
-                const parsed = Array.from(doc.querySelectorAll('item')).slice(0, 8).map(item => {
+                const parsed = Array.from(doc.querySelectorAll('item')).slice(0, 5).map(item => {
                     const pubDate = item.querySelector('pubDate')?.textContent || '';
                     let timeStr = '';
                     if (pubDate) {
@@ -447,622 +661,564 @@ export default function CarteraClient() {
                         else timeStr = `hace ${Math.floor(diff / 86400)}d`;
                     }
                     return {
-                        title:   (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, ''),
-                        link:    item.querySelector('link')?.textContent || '#',
+                        title: (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, ''),
+                        link: item.querySelector('link')?.textContent || '#',
                         timeAgo: timeStr,
-                        source:  item.querySelector('source')?.textContent || 'Google News',
+                        source: item.querySelector('source')?.textContent || 'Prensa',
                     };
                 });
                 if (alive) setGoogleNews(parsed);
-            } catch { if (alive) setNewsError(true); }
-            finally  { if (alive) setNewsLoading(false); }
+            } catch {
+                // Ignore news error
+            } finally {
+                if (alive) setNewsLoading(false);
+            }
         };
-        run();
+        fetchNews();
         return () => { alive = false; };
-    }, [detailSymbol, activeCompany]);
-
-    // ── Analistas Yahoo Finance ───────────────────────────────────────────────
-    useEffect(() => {
-        if (!activeCompany) return;
-        let alive = true;
-        const run = async () => {
-            setAnalystsLoading(true); setAnalystsError(false); setAnalystData(null);
-            try {
-                const clean = activeCompany.tvSymbol.includes(':') ? activeCompany.tvSymbol.split(':')[1] : activeCompany.tvSymbol;
-                const res = await fetch(`/api/analysts?symbol=${encodeURIComponent(clean)}`);
-                if (!res.ok) throw new Error();
-                const data = await res.json();
-                if (alive) setAnalystData(data);
-            } catch { if (alive) setAnalystsError(true); }
-            finally  { if (alive) setAnalystsLoading(false); }
-        };
-        run();
-        return () => { alive = false; };
-    }, [detailSymbol, activeCompany]);
-
-    // ── Filtro de búsqueda ────────────────────────────────────────────────────
-    const q = searchQuery.toLowerCase();
-    const filteredCategories = CATEGORIES.map(cat => ({
-        ...cat,
-        companies: cat.companies.filter(c =>
-            c.name.toLowerCase().includes(q) ||
-            c.symbol.toLowerCase().includes(q)
-        )
-    })).filter(cat => cat.companies.length > 0);
+    }, [activeCompany]);
 
     if (!isMounted) return null;
 
     // ─────────────────────────────────────────────────────────────────────────
     return (
-        <main className="min-h-screen pt-24 pb-16 px-4 md:px-8" style={{ background: 'var(--bg-page)' }}>
+        <main className="min-h-screen pt-14 pb-16 md:pb-12">
 
-            {showOnboarding && (
-                <OnboardingWizard
-                    onComplete={(syms) => { savePortfolio(syms); setDetailSymbol(syms[0]); setShowOnboarding(false); }}
-                    onSkip={() => setShowOnboarding(false)}
+            {/* Modal de Ponderaciones */}
+            {showWeightsModal && (
+                <WeightsModal
+                    holdings={holdings}
+                    onSave={(newHoldings) => {
+                        saveHoldings(newHoldings);
+                        setShowWeightsModal(false);
+                    }}
+                    onClose={() => setShowWeightsModal(false)}
                 />
             )}
 
-            <div className="max-w-7xl mx-auto space-y-8">
-
-                {/* ── Encabezado ── */}
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            {/* ── Encabezado Infopeso Standard ── */}
+            <div className="px-5 sm:px-8 py-8" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row md:items-end justify-between gap-4">
                     <div>
-                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--accent)' }}>
-                            Dashboard Personal
-                        </span>
-                        <h1 className="text-3xl md:text-4xl font-extrabold mt-1" style={{ color: 'var(--text-primary)' }}>
-                            Seguí tu Cartera
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] mb-1"
+                           style={{ color: 'var(--accent)', fontFamily: 'var(--font-ui)' }}>
+                            Centro de Monitoreo · Inversión Personal
+                        </p>
+                        <h1 className="text-3xl sm:text-4xl leading-tight"
+                            style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)', fontStyle: 'italic' }}>
+                            Mi Cartera de Acciones
                         </h1>
-                        <p className="text-sm mt-1.5" style={{ color: 'var(--text-secondary)' }}>
-                            Monitoreá tus activos con datos reales de mercado y análisis de Wall Street.
+                        <p className="mt-1 text-sm" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                            Métricas clave, rentabilidad y diagnóstico consolidado de tus inversiones en tiempo real.
                         </p>
                     </div>
-                    {portfolio.length > 0 && (
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <button onClick={() => setIsEditing(!isEditing)}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold cursor-pointer border transition-all"
-                                    style={{ background: 'var(--bg-surface)', color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
-                                <Ico name={isEditing ? 'x' : 'edit'} size={12} />
-                                {isEditing ? 'Cerrar editor' : 'Editar cartera'}
-                            </button>
-                            <button onClick={clearPortfolio}
-                                    className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold cursor-pointer border transition-all hover:scale-105"
-                                    style={{ background: 'var(--negative-soft)', color: 'var(--negative)', borderColor: 'var(--negative)' }}>
-                                <Ico name="trash" size={12} />
-                                Vaciar
-                            </button>
-                        </div>
-                    )}
+
+                    {/* Acciones */}
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => setShowWeightsModal(true)}
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border"
+                                style={{ background: 'var(--accent)', color: 'white', borderColor: 'var(--accent)' }}>
+                            <Ico name="sliders" size={13} />
+                            Ajustar Cartera ({holdings.length})
+                        </button>
+                        <button onClick={clearPortfolio}
+                                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer border hover:bg-[var(--bg-surface-hover)]"
+                                style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-surface)' }}>
+                            Reiniciar
+                        </button>
+                    </div>
                 </div>
+            </div>
 
-                {/* ── Estado vacío ── */}
-                {portfolio.length === 0 && !isEditing && (
-                    <div className="text-center py-20 space-y-5">
-                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto"
-                             style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                            <Ico name="barChart" size={32} />
-                        </div>
-                        <h2 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)' }}>Tu cartera está vacía</h2>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            Usá el asistente guiado o elegí activos manualmente para comenzar.
-                        </p>
-                        <div className="flex gap-3 justify-center flex-wrap">
-                            <button onClick={() => setShowOnboarding(true)}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold cursor-pointer transition-all hover:scale-105"
-                                    style={{ background: 'var(--accent)', color: 'white' }}>
-                                <Ico name="sparkle" size={14} />
-                                Guiarme paso a paso
-                            </button>
-                            <button onClick={() => setIsEditing(true)}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold cursor-pointer border transition-all"
-                                    style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)', background: 'var(--bg-surface)' }}>
-                                <Ico name="edit" size={14} />
-                                Armar manualmente
-                            </button>
-                        </div>
+            <section className="px-5 sm:px-8 py-8">
+                <div className="max-w-[1200px] mx-auto space-y-7">
+
+                    {/* ── BLOOMBERG STYLE TOP NEWS TICKER / SLIDER ── */}
+                    <BloombergNewsSlider holdings={holdings} />
+
+                    {/* ── 4 Tarjetas Clave de la Cartera (Lenguaje Simple) ── */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                        {/* 1. Rentabilidad del Negocio (ROE) */}
+                        <article className="flex flex-col gap-1.5 p-4 rounded-xl"
+                                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                   style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                    Rentabilidad de las Empresas
+                                </p>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                      style={{
+                                          background: (metrics.weightedROE || 0) >= 15 ? 'var(--positive-soft)' : 'var(--bg-surface-hover)',
+                                          color: (metrics.weightedROE || 0) >= 15 ? 'var(--positive)' : 'var(--text-secondary)',
+                                      }}>
+                                    {(metrics.weightedROE || 0) >= 18 ? 'Excelente' : (metrics.weightedROE || 0) >= 10 ? 'Buena' : 'Moderada'}
+                                </span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-2xl font-medium leading-none"
+                                      style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
+                                    {metrics.weightedROE ? `${metrics.weightedROE.toFixed(1)}%` : '—'}
+                                </span>
+                                <span className="text-xs" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                                    ROE promedio
+                                </span>
+                            </div>
+                            <p className="text-[11px] mt-1" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                                Ganancia generada por cada $100 de patrimonio de las empresas.
+                            </p>
+                        </article>
+
+                        {/* 2. Valuación (P/E) */}
+                        <article className="flex flex-col gap-1.5 p-4 rounded-xl"
+                                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                   style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                    Valuación (Precio / Ganancia)
+                                </p>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                      style={{
+                                          background: (metrics.weightedPE || 0) < 18 ? 'var(--positive-soft)' : 'var(--accent-soft)',
+                                          color: (metrics.weightedPE || 0) < 18 ? 'var(--positive)' : 'var(--accent)',
+                                      }}>
+                                    {(metrics.weightedPE || 0) < 16 ? 'Barata (Value)' : (metrics.weightedPE || 0) < 30 ? 'Razonable' : 'Exigente'}
+                                </span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-2xl font-medium leading-none"
+                                      style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
+                                    {metrics.weightedPE ? `${metrics.weightedPE.toFixed(1)}x` : '—'}
+                                </span>
+                                <span className="text-xs" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                                    P/E ratio
+                                </span>
+                            </div>
+                            <p className="text-[11px] mt-1" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                                Años de ganancias que cuesta comprar el portafolio hoy.
+                            </p>
+                        </article>
+
+                        {/* 3. Dividendos Anuales */}
+                        <article className="flex flex-col gap-1.5 p-4 rounded-xl"
+                                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                   style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                    Cobro de Dividendos
+                                </p>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                      style={{ background: 'var(--positive-soft)', color: 'var(--positive)' }}>
+                                    Flujo pasivo
+                                </span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-2xl font-medium leading-none"
+                                      style={{ color: 'var(--positive)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
+                                    {metrics.weightedDividendYield ? `${metrics.weightedDividendYield.toFixed(1)}%` : '0.0%'}
+                                </span>
+                                <span className="text-xs" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                                    anual estimado
+                                </span>
+                            </div>
+                            <p className="text-[11px] mt-1" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                                Renta en efectivo estimada que pagan tus acciones por año.
+                            </p>
+                        </article>
+
+                        {/* 4. Proyección de Analistas */}
+                        <article className="flex flex-col gap-1.5 p-4 rounded-xl"
+                                 style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
+                            <div className="flex items-center justify-between">
+                                <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                   style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                    Objetivo Wall Street
+                                </p>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                                      style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                                    Consenso
+                                </span>
+                            </div>
+                            <div className="flex items-baseline gap-1 mt-1">
+                                <span className="text-2xl font-medium leading-none"
+                                      style={{ color: (metrics.weightedUpside || 0) >= 0 ? 'var(--positive)' : 'var(--negative)', fontFamily: 'var(--font-mono)', fontVariantNumeric: 'tabular-nums' }}>
+                                    {metrics.weightedUpside ? `+${metrics.weightedUpside.toFixed(1)}%` : '—'}
+                                </span>
+                                <span className="text-xs" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>
+                                    potencial suba
+                                </span>
+                            </div>
+                            <p className="text-[11px] mt-1" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                                Suba promedio estimada por analistas para los próximos 12 meses.
+                            </p>
+                        </article>
                     </div>
-                )}
 
-                {/* ── Selector / Editor ── */}
-                {(isEditing || (portfolio.length === 0 && isEditing)) && (
-                    <div className="space-y-6">
-                        {/* Buscador */}
-                        <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-tertiary)' }}>
-                                <Ico name="search" size={16} />
-                            </span>
-                            <input type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                                   placeholder="Buscar por nombre o ticker… ej: Apple, AAPL, YPF, petróleo"
-                                   className="w-full pl-11 pr-10 py-3.5 rounded-2xl text-sm font-semibold outline-none border"
-                                   style={{ background: 'var(--bg-surface)', color: 'var(--text-primary)', borderColor: 'var(--border-subtle)' }} />
-                            {searchQuery && (
-                                <button onClick={() => setSearchQuery('')}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 cursor-pointer opacity-50 hover:opacity-100"
-                                        style={{ color: 'var(--text-tertiary)' }}>
-                                    <Ico name="x" size={14} />
-                                </button>
-                            )}
-                        </div>
+                    {/* ── Navegación de Vistas Simples ── */}
+                    <div className="flex items-center gap-2 border-b pb-1" style={{ borderColor: 'var(--border-subtle)' }}>
+                        {[
+                            { id: 'overview', label: '📊 Resumen & Diagnóstico' },
+                            { id: 'table',    label: '📋 Lista de Acciones' },
+                            { id: 'detail',   label: '🔍 Ficha por Acción' },
+                        ].map(t => (
+                            <button key={t.id} onClick={() => setActiveTab(t.id)}
+                                    className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer border ${
+                                        activeTab === t.id
+                                            ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                                            : 'bg-transparent border-transparent text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)]'
+                                    }`}>
+                                {t.label}
+                            </button>
+                        ))}
+                    </div>
 
-                        {/* Presets */}
-                        {!searchQuery && (
-                            <div>
-                                <h3 className="text-xs font-extrabold uppercase tracking-widest mb-3 flex items-center gap-2"
-                                    style={{ color: 'var(--text-tertiary)' }}>
-                                    <Ico name="sparkle" size={12} /> Carteras prearmadas
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                    {PRESETS.map(preset => (
-                                        <button key={preset.id} onClick={() => applyPreset(preset.symbols)}
-                                                className="p-4 rounded-2xl border-2 text-left cursor-pointer transition-all hover:scale-[1.03] hover:shadow-lg space-y-2"
-                                                style={{
-                                                    borderColor: preset.highlight ? 'var(--positive)' : 'var(--border-subtle)',
-                                                    background:  preset.highlight ? 'var(--positive-soft)' : 'var(--bg-surface)',
-                                                }}>
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-lg flex items-center justify-center"
-                                                     style={{ background: preset.highlight ? 'var(--positive)' : 'var(--accent-soft)', color: preset.highlight ? 'white' : 'var(--accent)' }}>
-                                                    <Ico name={preset.icon} size={14} />
-                                                </div>
-                                                <p className="font-extrabold text-sm" style={{ color: preset.highlight ? 'var(--positive)' : 'var(--text-primary)' }}>
-                                                    {preset.name}
+                    {/* ── VISTA 1: RESUMEN Y DIAGNÓSTICO EN LENGUAJE SIMPLE ── */}
+                    {activeTab === 'overview' && (
+                        <div className="space-y-6">
+
+                            {/* Diagnóstico sencillo */}
+                            <div className="p-5 rounded-2xl border space-y-3"
+                                 style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                <div className="flex items-center justify-between flex-wrap gap-2">
+                                    <h3 className="text-xs font-semibold uppercase tracking-[0.1em]"
+                                        style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                        ¿Cómo está balanceada tu cartera?
+                                    </h3>
+                                    <span className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                                        Salud General: <strong style={{ color: 'var(--positive)', fontFamily: 'var(--font-mono)' }}>{metrics.healthScore}/100</strong>
+                                    </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {metrics.diagnostics.map((d, i) => (
+                                        <div key={i} className="p-3 rounded-xl border flex items-start gap-2.5"
+                                             style={{
+                                                 background: 'var(--bg-page)',
+                                                 borderColor: d.type === 'positive' ? 'var(--positive)' : 'var(--accent)',
+                                             }}>
+                                            <span className="text-sm shrink-0">
+                                                {d.type === 'positive' ? '✅' : '⚠️'}
+                                            </span>
+                                            <div>
+                                                <p className="text-xs font-bold"
+                                                   style={{ color: d.type === 'positive' ? 'var(--positive)' : 'var(--accent)', fontFamily: 'var(--font-ui)' }}>
+                                                    {d.title}
+                                                </p>
+                                                <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+                                                    {d.desc}
                                                 </p>
                                             </div>
-                                            <p className="text-[10px] leading-snug" style={{ color: 'var(--text-secondary)' }}>{preset.description}</p>
-                                            <p className="text-[10px] font-bold" style={{ color: 'var(--text-tertiary)' }}>
-                                                {preset.symbols.join(' · ')}
-                                            </p>
-                                        </button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
-                        )}
 
-                        {/* Lista de empresas */}
-                        {filteredCategories.map(cat => (
-                            <div key={cat.name}>
-                                <h3 className="text-xs font-extrabold uppercase tracking-widest mb-3 flex items-center gap-2"
-                                    style={{ color: 'var(--text-tertiary)' }}>
-                                    <Ico name={cat.name === 'Argentina' ? 'mapPin' : 'globe'} size={12} />
-                                    {cat.name === 'Argentina' ? 'Mercado Argentino' : 'Mercado Internacional'}
-                                    <span className="font-normal opacity-50">({cat.companies.length})</span>
-                                </h3>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-                                    {cat.companies.map(company => (
-                                        <CompanyCard key={company.symbol} company={company}
-                                                     isSelected={portfolio.includes(company.symbol)}
-                                                     onToggle={toggleCompany}
-                                                     semaphoreSignal={semaphoreCache[company.symbol]} />
-                                    ))}
-                                </div>
-                            </div>
-                        ))}
-                        {filteredCategories.length === 0 && (
-                            <div className="text-center py-12 space-y-2">
-                                <Ico name="search" size={28} className="mx-auto opacity-30" />
-                                <p className="text-sm font-bold" style={{ color: 'var(--text-secondary)' }}>
-                                    Sin resultados para "{searchQuery}"
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                )}
+                            {/* Distribución por Sector & País */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                {/* ── Dashboard principal ── */}
-                {portfolio.length > 0 && !isEditing && (
-                    <div className="space-y-6">
-
-                        {/* Tarjetas de la cartera */}
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                            {portfolio.map(sym => {
-                                const comp = getCompanyBySymbol(sym);
-                                if (!comp) return null;
-                                const signal = semaphoreCache[sym];
-                                const isActive = detailSymbol === sym || (detailSymbol === '' && sym === portfolio[0]);
-                                return (
-                                    <button key={sym} onClick={() => setDetailSymbol(sym)}
-                                            className="p-3 rounded-2xl border-2 text-left cursor-pointer transition-all duration-200 hover:scale-[1.03] hover:shadow-lg space-y-2"
-                                            style={{
-                                                borderColor: isActive ? 'var(--accent)' : 'var(--border-subtle)',
-                                                background:  isActive ? 'var(--accent-soft)' : 'var(--bg-surface)',
-                                            }}>
-                                        <div className="flex items-center gap-2">
-                                            <CompanyLogo company={comp} className="w-8 h-8" />
-                                            <div className="min-w-0">
-                                                <p className="text-xs font-extrabold truncate" style={{ color: 'var(--text-primary)' }}>{comp.name}</p>
-                                                <p className="text-[9px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>{comp.symbol}</p>
-                                            </div>
-                                        </div>
-                                        <div className="flex flex-wrap gap-1">
-                                            {signal && signal !== 'unknown' && <SemaphoreIndicator signal={signal} size="xs" />}
-                                            <RiskBadge riskLevel={comp.riskLevel} />
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                            <button onClick={() => setIsEditing(true)}
-                                    className="p-3 rounded-2xl border-2 border-dashed cursor-pointer transition-all hover:opacity-80 flex flex-col items-center justify-center gap-2"
-                                    style={{ borderColor: 'var(--border-subtle)' }}>
-                                <div className="w-7 h-7 rounded-full flex items-center justify-center"
-                                     style={{ background: 'var(--bg-surface)', color: 'var(--text-tertiary)' }}>
-                                    <Ico name="plus" size={14} />
-                                </div>
-                                <span className="text-[9px] font-bold" style={{ color: 'var(--text-tertiary)' }}>Agregar</span>
-                            </button>
-                        </div>
-
-                        {/* Detalle de empresa activa */}
-                        {activeCompany && (
-                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-
-                                {/* Columna izquierda: charts + widgets */}
-                                <div className="col-span-1 lg:col-span-7 space-y-5">
-
-                                    {/* Header empresa activa */}
-                                    <div className="p-5 rounded-[24px] border space-y-3"
-                                         style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
-                                        <div className="flex items-start gap-4">
-                                            <CompanyLogo company={activeCompany} className="w-12 h-12" />
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <h2 className="text-2xl font-extrabold" style={{ color: 'var(--text-primary)' }}>
-                                                        {activeCompany.name}
-                                                    </h2>
-                                                    <RiskBadge riskLevel={activeCompany.riskLevel} />
-                                                    {semaphoreCache[activeCompany.symbol] && (
-                                                        <SemaphoreIndicator signal={semaphoreCache[activeCompany.symbol]} />
-                                                    )}
+                                {/* Sectores */}
+                                <div className="p-5 rounded-2xl border space-y-3"
+                                     style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                    <h3 className="text-xs font-semibold uppercase tracking-[0.1em]"
+                                        style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                        Rubros y Sectores
+                                    </h3>
+                                    <div className="space-y-2.5">
+                                        {Object.entries(metrics.sectorBreakdown).map(([sector, pct]) => (
+                                            <div key={sector} className="space-y-1">
+                                                <div className="flex items-center justify-between text-xs">
+                                                    <span className="font-medium flex items-center gap-1.5" style={{ color: 'var(--text-primary)' }}>
+                                                        <SectorIcon sector={sector} size={12} /> {sector}
+                                                    </span>
+                                                    <span className="font-semibold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                                                        {pct.toFixed(0)}%
+                                                    </span>
                                                 </div>
-                                                <div className="flex items-center gap-1.5 mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                                                    <SectorIcon sector={activeCompany.sector} size={12} />
-                                                    <span className="text-xs font-semibold">{activeCompany.symbol} · {activeCompany.sector}</span>
+                                                <div className="h-1.5 rounded-full bg-[var(--bg-page)] overflow-hidden">
+                                                    <div className="h-full rounded-full bg-[var(--accent)] transition-all duration-500"
+                                                         style={{ width: `${pct}%` }} />
                                                 </div>
                                             </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Países & Próximos Balances */}
+                                <div className="p-5 rounded-2xl border space-y-4 flex flex-col justify-between"
+                                     style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                    <div>
+                                        <h3 className="text-xs font-semibold uppercase tracking-[0.1em] mb-2.5"
+                                            style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                            Mercados (País)
+                                        </h3>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {Object.entries(metrics.geoBreakdown).map(([geo, pct]) => (
+                                                <div key={geo} className="p-2.5 rounded-xl border text-center"
+                                                     style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
+                                                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>{geo}</p>
+                                                    <p className="text-lg font-bold mt-0.5" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                                                        {pct.toFixed(0)}%
+                                                    </p>
+                                                </div>
+                                            ))}
                                         </div>
-                                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                                            {activeCompany.description}
+                                    </div>
+
+                                    {/* Próximos Balances */}
+                                    <div className="border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
+                                        <p className="text-[10px] font-semibold uppercase tracking-[0.1em] mb-2"
+                                           style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                            Próximos Reportes de Ganancias
                                         </p>
+                                        {metrics.upcomingEarnings.length === 0 ? (
+                                            <p className="text-xs opacity-60" style={{ color: 'var(--text-tertiary)' }}>
+                                                Sin fechas confirmadas en el corto plazo.
+                                            </p>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {metrics.upcomingEarnings.slice(0, 3).map(e => (
+                                                    <span key={e.symbol} className="px-2 py-1 rounded text-[11px] border"
+                                                          style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)', fontFamily: 'var(--font-mono)' }}>
+                                                        <strong>{e.symbol}</strong>: {new Date(e.date).toLocaleDateString('es-AR', { month: 'short', day: 'numeric' })}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
-                                    {/* MiniChart */}
-                                    <div className="rounded-[24px] border overflow-hidden"
-                                         style={{ borderColor: 'var(--border-subtle)', height: '400px' }}>
-                                        <MiniChart symbol={activeCompany.tvSymbol} colorTheme={theme}
-                                                   width="100%" height="100%" locale="es" isTransparent autosize />
-                                    </div>
+                    {/* ── VISTA 2: TABLA DE ACCIONES SIMPLE ── */}
+                    {activeTab === 'table' && (
+                        <div className="space-y-4">
+                            <div className="p-4 rounded-xl border flex items-center justify-between"
+                                 style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                                    Hacé clic en cualquier fila para ver el análisis detallado y noticias de esa empresa.
+                                </p>
+                                <button onClick={() => setShowWeightsModal(true)}
+                                        className="text-xs font-semibold px-2.5 py-1 rounded border cursor-pointer hover:opacity-80"
+                                        style={{ borderColor: 'var(--border-subtle)', color: 'var(--accent)', background: 'var(--bg-page)' }}>
+                                    Editar porcentajes
+                                </button>
+                            </div>
 
-                                    {/* Profile + Fundamentals */}
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="rounded-[24px] border overflow-hidden"
-                                             style={{ borderColor: 'var(--border-subtle)', height: '280px' }}>
-                                            <CompanyProfile symbol={activeCompany.tvSymbol} colorTheme={theme}
-                                                            width="100%" height="100%" locale="es" isTransparent />
+                            <div className="rounded-2xl border overflow-hidden"
+                                 style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-left border-collapse">
+                                        <thead>
+                                            <tr className="border-b text-[10px] font-semibold uppercase tracking-[0.1em]"
+                                                style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-page)', color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                                <th className="py-3 px-4">Empresa</th>
+                                                <th className="py-3 px-3 text-right">Peso en Cartera</th>
+                                                <th className="py-3 px-3 text-right">Precio Actual</th>
+                                                <th className="py-3 px-3 text-right">Valuación (P/E)</th>
+                                                <th className="py-3 px-3 text-right">Rentabilidad (ROE)</th>
+                                                <th className="py-3 px-3 text-right">Dividendos</th>
+                                                <th className="py-3 px-3 text-right">Upside Est.</th>
+                                                <th className="py-3 px-4 text-center">Consenso</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {holdings.map(h => {
+                                                const comp = getCompanyBySymbol(h.symbol);
+                                                const f = fundamentalsMap[h.symbol] || {};
+                                                return (
+                                                    <tr key={h.symbol}
+                                                        onClick={() => {
+                                                            setDetailSymbol(h.symbol);
+                                                            setActiveTab('detail');
+                                                        }}
+                                                        className="border-b transition-colors cursor-pointer hover:bg-[var(--bg-surface-hover)] text-xs"
+                                                        style={{ borderColor: 'var(--border-subtle)' }}>
+                                                        <td className="py-3 px-4">
+                                                            <div className="flex items-center gap-2.5">
+                                                                <CompanyLogo company={comp} className="w-7 h-7" />
+                                                                <div>
+                                                                    <p className="font-bold" style={{ color: 'var(--text-primary)' }}>{comp?.name || h.symbol}</p>
+                                                                    <p className="text-[10px]" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-mono)' }}>{h.symbol}</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+                                                            {h.weight}%
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+                                                            {f.price ? `${f.currency === 'ARS' ? '$' : 'US$'}${f.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}` : '—'}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-medium" style={{ fontFamily: 'var(--font-mono)' }}>
+                                                            {f.pe ? `${f.pe.toFixed(1)}x` : '—'}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-medium" style={{ color: (f.roe || 0) >= 15 ? 'var(--positive)' : 'inherit', fontFamily: 'var(--font-mono)' }}>
+                                                            {f.roe ? `${f.roe.toFixed(1)}%` : '—'}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-medium text-[var(--positive)]" style={{ fontFamily: 'var(--font-mono)' }}>
+                                                            {f.dividendYield ? `${f.dividendYield.toFixed(1)}%` : '0%'}
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right font-bold" style={{ color: (f.upsidePotential || 0) >= 0 ? 'var(--positive)' : 'inherit', fontFamily: 'var(--font-mono)' }}>
+                                                            {f.upsidePotential ? `+${f.upsidePotential.toFixed(1)}%` : '—'}
+                                                        </td>
+                                                        <td className="py-3 px-4 text-center">
+                                                            <SemaphoreIndicator signal={f.recommendationKey === 'hold' ? 'hold' : ['buy','strong_buy','strongBuy'].includes(f.recommendationKey) ? 'buy' : 'unknown'} size="xs" />
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ── VISTA 3: FICHA INDIVIDUAL POR ACCIÓN (DEEP DIVE) ── */}
+                    {activeTab === 'detail' && (
+                        <div className="space-y-6">
+
+                            {/* Selector horizontal de acciones de tu cartera */}
+                            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                                {holdings.map(h => {
+                                    const comp = getCompanyBySymbol(h.symbol);
+                                    const isSel = (activeCompany?.symbol === h.symbol);
+                                    return (
+                                        <button key={h.symbol} onClick={() => setDetailSymbol(h.symbol)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer border flex items-center gap-2 shrink-0 ${
+                                                    isSel
+                                                        ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-sm'
+                                                        : 'bg-[var(--bg-surface)] border-[var(--border-subtle)] text-[var(--text-secondary)] hover:bg-[var(--bg-surface-hover)]'
+                                                }`}>
+                                            <CompanyLogo company={comp} className="w-5 h-5 text-[8px]" />
+                                            <span>{comp?.name || h.symbol}</span>
+                                            <span className="opacity-70 text-[10px]" style={{ fontFamily: 'var(--font-mono)' }}>({h.weight}%)</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {activeCompany && (
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                                    {/* Gráfico y Widget */}
+                                    <div className="lg:col-span-2 space-y-4">
+                                        <div className="p-4 rounded-xl border"
+                                             style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
+                                                        {activeCompany.name} ({activeCompany.symbol})
+                                                    </h2>
+                                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                                        {activeCompany.sector} · {activeCompany.category}
+                                                    </p>
+                                                </div>
+                                                {activeFundamentals.price && (
+                                                    <div className="text-right">
+                                                        <p className="text-xl font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>
+                                                            {activeFundamentals.currency === 'ARS' ? '$' : 'US$'}{activeFundamentals.price.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+                                                        </p>
+                                                        <p className={`text-xs font-semibold ${(activeFundamentals.changePercent || 0) >= 0 ? 'text-[var(--positive)]' : 'text-[var(--negative)]'}`}
+                                                           style={{ fontFamily: 'var(--font-mono)' }}>
+                                                            {(activeFundamentals.changePercent || 0) >= 0 ? '+' : ''}{(activeFundamentals.changePercent || 0).toFixed(2)}% hoy
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
-                                        <div className="rounded-[24px] border overflow-hidden"
-                                             style={{ borderColor: 'var(--border-subtle)', height: '280px' }}>
+
+                                        {/* TradingView MiniChart */}
+                                        <div className="rounded-xl border overflow-hidden"
+                                             style={{ borderColor: 'var(--border-subtle)', height: '360px' }}>
+                                            <MiniChart symbol={activeCompany.tvSymbol} colorTheme={theme}
+                                                       width="100%" height="100%" locale="es" isTransparent autosize />
+                                        </div>
+
+                                        {/* TradingView Fundamentals */}
+                                        <div className="rounded-xl border overflow-hidden"
+                                             style={{ borderColor: 'var(--border-subtle)', height: '240px' }}>
                                             <FundamentalData symbol={activeCompany.tvSymbol} colorTheme={theme}
                                                              width="100%" height="100%" locale="es" isTransparent displayMode="compact" />
                                         </div>
                                     </div>
 
-                                    {/* Monitor sectorial – Energía */}
-                                    {hasSector(portfolio, 'Energía y Commodities') && (
-                                        <div className="p-5 rounded-[24px] border space-y-3"
+                                    {/* Tesis en lenguaje simple & Noticias */}
+                                    <div className="space-y-4">
+
+                                        {/* Tesis */}
+                                        <div className="p-4 rounded-xl border space-y-3"
                                              style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
-                                            <h4 className="text-xs font-extrabold uppercase tracking-widest flex items-center gap-2"
-                                                style={{ color: 'var(--accent)' }}>
-                                                <Ico name="flame" size={12} /> Monitor de Energía y Commodities
-                                            </h4>
-                                            <div className="grid grid-cols-2 gap-3">
-                                                {['NYMEX:CL1!', 'NYMEX:NG1!', 'CAPITALCOM:NATURAL_GAS', 'ECONOMICS:ARGINTR'].map(sym => (
-                                                    <div key={sym} className="rounded-2xl overflow-hidden border"
-                                                         style={{ height: '130px', borderColor: 'var(--border-subtle)' }}>
-                                                        <MiniChart symbol={sym} colorTheme={theme}
-                                                                   width="100%" height="100%" locale="es" isTransparent autosize />
-                                                    </div>
-                                                ))}
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                               style={{ color: 'var(--accent)', fontFamily: 'var(--font-ui)' }}>
+                                                Tesis de Inversión
+                                            </p>
+                                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                                {activeCompany.description}
+                                            </p>
+
+                                            <div className="border-t pt-2 space-y-1" style={{ borderColor: 'var(--border-subtle)' }}>
+                                                <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>
+                                                    ¿Cómo gana dinero?
+                                                </p>
+                                                <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                                    {activeCompany.planDeNegocios}
+                                                </p>
+                                            </div>
+
+                                            <div className="border-t pt-2 space-y-1" style={{ borderColor: 'var(--border-subtle)' }}>
+                                                <p className="text-[10px] font-semibold uppercase tracking-[0.1em]" style={{ color: 'var(--text-tertiary)' }}>
+                                                    Qué mirar de cerca
+                                                </p>
+                                                <ul className="text-xs space-y-1 pl-3.5 list-disc" style={{ color: 'var(--text-secondary)' }}>
+                                                    {activeCompany.fundamentosClave.slice(0, 3).map((item, i) => (
+                                                        <li key={i}>{item}</li>
+                                                    ))}
+                                                </ul>
                                             </div>
                                         </div>
-                                    )}
-                                </div>
 
-                                {/* Columna derecha: análisis + noticias */}
-                                <div className="col-span-1 lg:col-span-5 space-y-5">
-
-                                    {/* Ficha fundamental */}
-                                    <div className="p-5 rounded-[24px] border space-y-4"
-                                         style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
-                                        <h3 className="text-sm font-extrabold flex items-center gap-2"
-                                            style={{ color: 'var(--text-primary)' }}>
-                                            <Ico name="barChart" size={14} /> Análisis Fundamental
-                                        </h3>
-
-                                        <div className="space-y-1.5 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                                            <h4 className="text-[10px] font-extrabold uppercase tracking-widest"
-                                                style={{ color: 'var(--text-secondary)' }}>Plan de Negocios</h4>
-                                            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                                                {activeCompany.planDeNegocios}
+                                        {/* Noticias de Prensa */}
+                                        <div className="p-4 rounded-xl border space-y-2.5"
+                                             style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                                            <p className="text-[10px] font-semibold uppercase tracking-[0.11em]"
+                                               style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-ui)' }}>
+                                                Últimas Noticias
                                             </p>
-                                        </div>
-
-                                        <div className="space-y-2 border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                                            <h4 className="text-[10px] font-extrabold uppercase tracking-widest"
-                                                style={{ color: 'var(--text-secondary)' }}>Fundamentales Clave</h4>
-                                            <ul className="space-y-1.5 pl-4 list-disc text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                                {activeCompany.fundamentosClave.map((item, i) => (
-                                                    <li key={i} className="leading-snug">{item}</li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <div className="border-t pt-3" style={{ borderColor: 'var(--border-subtle)' }}>
-                                            <h4 className="text-[10px] font-extrabold uppercase tracking-widest mb-1.5"
-                                                style={{ color: 'var(--text-secondary)' }}>Análisis Sectorial</h4>
-                                            <p className="text-xs leading-relaxed p-3 rounded-xl border"
-                                               style={{ color: 'var(--text-secondary)', background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
-                                                {activeCompany.analisisProfesional}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    {/* Panel noticias + analistas */}
-                                    <div className="rounded-[24px] border flex flex-col overflow-hidden"
-                                         style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)', minHeight: '480px' }}>
-
-                                        {/* Pestañas */}
-                                        <div className="flex border-b" style={{ borderColor: 'var(--border-subtle)' }}>
-                                            {[
-                                                { id: 'google',      label: 'Prensa',         icon: 'newspaper' },
-                                                { id: 'analysts',    label: 'Analistas (YF)', icon: 'barChart'  },
-                                                { id: 'tradingview', label: 'Mercado (TV)',   icon: 'tv'        },
-                                            ].map(tab => (
-                                                <button key={tab.id} onClick={() => setNewsTab(tab.id)}
-                                                        className="flex-1 py-3 text-[10px] font-extrabold tracking-wider uppercase border-b-2 transition-all duration-200 cursor-pointer flex items-center justify-center gap-1"
-                                                        style={{
-                                                            color: newsTab === tab.id ? 'var(--accent)' : 'var(--text-tertiary)',
-                                                            borderBottomColor: newsTab === tab.id ? 'var(--accent)' : 'transparent',
-                                                            background: newsTab === tab.id ? 'var(--accent-soft)' : 'transparent',
-                                                        }}>
-                                                    <Ico name={tab.icon} size={11} />
-                                                    {tab.label}
-                                                </button>
-                                            ))}
-                                        </div>
-
-                                        <div className="flex-1 overflow-y-auto max-h-[520px]">
-
-                                            {/* TAB: Google News */}
-                                            {newsTab === 'google' && (
-                                                <div className="p-4 space-y-3">
-                                                    {/* Titular destacado */}
-                                                    {!newsLoading && googleNews.length > 0 && (
-                                                        <div className="p-3.5 rounded-xl border-l-4"
-                                                             style={{ background: 'var(--accent-soft)', borderLeftColor: 'var(--accent)' }}>
-                                                            <p className="text-[9px] font-extrabold uppercase tracking-widest flex items-center gap-1 mb-1"
-                                                               style={{ color: 'var(--accent)' }}>
-                                                                <Ico name="bolt" size={9} /> Último titular
-                                                            </p>
-                                                            <p className="text-xs font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
-                                                                {googleNews[0].title}
-                                                            </p>
-                                                            <p className="text-[9px] mt-0.5 flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-                                                                <Ico name="clock" size={9} /> {googleNews[0].source} · {googleNews[0].timeAgo}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                    {newsLoading
-                                                        ? Array.from({ length: 4 }).map((_, i) => (
-                                                            <div key={i} className="animate-pulse p-4 rounded-xl border space-y-2" style={{ borderColor: 'var(--border-subtle)' }}>
-                                                                <div className="skeleton h-3 w-1/4 rounded" />
-                                                                <div className="skeleton h-4 w-full rounded" />
+                                            {newsLoading ? (
+                                                <div className="space-y-2 animate-pulse">
+                                                    <div className="h-3 w-1/2 bg-[var(--bg-surface-hover)] rounded" />
+                                                    <div className="h-4 w-full bg-[var(--bg-surface-hover)] rounded" />
+                                                </div>
+                                            ) : googleNews.length === 0 ? (
+                                                <p className="text-xs opacity-50" style={{ color: 'var(--text-tertiary)' }}>
+                                                    Sin noticias recientes.
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-2">
+                                                    {googleNews.slice(0, 3).map((n, i) => (
+                                                        <a key={i} href={n.link} target="_blank" rel="noopener noreferrer"
+                                                           className="block p-2 rounded-lg border text-xs hover:bg-[var(--bg-surface-hover)] transition-colors"
+                                                           style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
+                                                            <div className="flex items-center justify-between text-[9px] mb-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                                                                <span>{n.source}</span>
+                                                                <span>{n.timeAgo}</span>
                                                             </div>
-                                                        ))
-                                                        : newsError
-                                                        ? <div className="flex flex-col items-center py-10 gap-2">
-                                                            <Ico name="alertCircle" size={24} style={{ color: 'var(--negative)' }} />
-                                                            <p className="text-xs" style={{ color: 'var(--negative)' }}>Error al cargar noticias.</p>
-                                                          </div>
-                                                        : googleNews.map((news, i) => (
-                                                            <a key={i} href={news.link} target="_blank" rel="noopener noreferrer"
-                                                               className="block p-4 rounded-xl border transition-all duration-200 hover:scale-[1.01] hover:shadow-md group"
-                                                               style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
-                                                                <div className="flex items-center justify-between mb-2">
-                                                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider"
-                                                                          style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                                                                        {news.source}
-                                                                    </span>
-                                                                    <span className="text-[9px] flex items-center gap-1" style={{ color: 'var(--text-tertiary)' }}>
-                                                                        <Ico name="clock" size={9} /> {news.timeAgo}
-                                                                    </span>
-                                                                </div>
-                                                                <h5 className="text-xs font-bold leading-snug group-hover:text-[var(--accent)] transition-colors"
-                                                                    style={{ color: 'var(--text-primary)' }}>
-                                                                    {news.title}
-                                                                </h5>
-                                                            </a>
-                                                        ))
-                                                    }
-                                                </div>
-                                            )}
-
-                                            {/* TAB: Analistas Yahoo Finance */}
-                                            {newsTab === 'analysts' && (
-                                                <div className="p-4 space-y-4">
-                                                    {analystsLoading
-                                                        ? <div className="space-y-3 animate-pulse">
-                                                            <div className="skeleton h-24 w-full rounded-xl" />
-                                                            <div className="skeleton h-32 w-full rounded-xl" />
-                                                            <div className="skeleton h-16 w-full rounded-xl" />
-                                                          </div>
-                                                        : analystsError || !analystData
-                                                        ? <div className="flex flex-col items-center py-10 gap-2">
-                                                            <Ico name="alertCircle" size={24} style={{ color: 'var(--negative)' }} />
-                                                            <p className="text-xs font-bold" style={{ color: 'var(--negative)' }}>Sin datos de analistas</p>
-                                                            <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>
-                                                                Yahoo Finance no reporta cobertura de analistas para este activo.
+                                                            <p className="font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
+                                                                {n.title}
                                                             </p>
-                                                          </div>
-                                                        : <>
-                                                            {/* Precio objetivo */}
-                                                            {analystData.financialData?.targetMeanPrice && (
-                                                                <div className="p-4 rounded-xl border space-y-3"
-                                                                     style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
-                                                                    <div className="flex items-center justify-between">
-                                                                        <h5 className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5"
-                                                                            style={{ color: 'var(--text-secondary)' }}>
-                                                                            <Ico name="target" size={11} /> Consenso de Wall Street
-                                                                        </h5>
-                                                                        {analystData.financialData.numberOfAnalystOpinions && (
-                                                                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full"
-                                                                                  style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
-                                                                                {analystData.financialData.numberOfAnalystOpinions} analistas
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="grid grid-cols-3 gap-2 text-center">
-                                                                        <div className="p-2 rounded-lg" style={{ background: 'var(--bg-surface)' }}>
-                                                                            <p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Precio Bajo</p>
-                                                                            <p className="text-sm font-bold mt-0.5" style={{ color: 'var(--negative)' }}>
-                                                                                ${analystData.financialData.targetLowPrice?.toFixed(2)}
-                                                                            </p>
-                                                                        </div>
-                                                                        <div className="p-2 rounded-lg border-2"
-                                                                             style={{ background: 'var(--accent-soft)', borderColor: 'var(--accent)' }}>
-                                                                            <p className="text-[9px] font-bold uppercase" style={{ color: 'var(--accent)' }}>Objetivo Prom.</p>
-                                                                            <p className="text-sm font-extrabold mt-0.5" style={{ color: 'var(--accent)' }}>
-                                                                                ${analystData.financialData.targetMeanPrice?.toFixed(2)}
-                                                                            </p>
-                                                                        </div>
-                                                                        <div className="p-2 rounded-lg" style={{ background: 'var(--bg-surface)' }}>
-                                                                            <p className="text-[9px] font-semibold uppercase" style={{ color: 'var(--text-tertiary)' }}>Precio Alto</p>
-                                                                            <p className="text-sm font-bold mt-0.5" style={{ color: 'var(--positive)' }}>
-                                                                                ${analystData.financialData.targetHighPrice?.toFixed(2)}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                    {analystData.financialData.recommendationKey && (
-                                                                        <div className="flex items-center justify-center gap-2">
-                                                                            <span className="text-[10px] font-semibold" style={{ color: 'var(--text-tertiary)' }}>
-                                                                                Recomendación:
-                                                                            </span>
-                                                                            <SemaphoreIndicator
-                                                                                signal={
-                                                                                    ['buy','strong_buy','strongBuy'].includes(analystData.financialData.recommendationKey) ? 'buy'
-                                                                                    : analystData.financialData.recommendationKey === 'hold' ? 'hold'
-                                                                                    : 'sell'
-                                                                                }
-                                                                            />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            )}
-
-                                                            {/* Distribución */}
-                                                            {analystData.trend && (() => {
-                                                                const t = analystData.trend;
-                                                                const total = t.strongBuy + t.buy + t.hold + t.sell + t.strongSell || 1;
-                                                                const bars = [
-                                                                    { label: 'Compra fuerte', value: t.strongBuy,  color: '#10b981' },
-                                                                    { label: 'Comprar',       value: t.buy,         color: '#34d399' },
-                                                                    { label: 'Mantener',      value: t.hold,        color: 'var(--accent)' },
-                                                                    { label: 'Vender',        value: t.sell,        color: '#f87171' },
-                                                                    { label: 'Venta fuerte',  value: t.strongSell,  color: '#ef4444' },
-                                                                ];
-                                                                return (
-                                                                    <div className="p-4 rounded-xl border space-y-2.5"
-                                                                         style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
-                                                                        <h5 className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5"
-                                                                            style={{ color: 'var(--text-secondary)' }}>
-                                                                            <Ico name="megaphone" size={11} /> Distribución de Opiniones
-                                                                        </h5>
-                                                                        {bars.map(bar => (
-                                                                            <div key={bar.label} className="flex items-center gap-2 text-[10px]">
-                                                                                <span className="w-20 text-right font-semibold shrink-0" style={{ color: 'var(--text-tertiary)' }}>
-                                                                                    {bar.label}
-                                                                                </span>
-                                                                                <div className="flex-1 rounded-full h-2 overflow-hidden"
-                                                                                     style={{ background: 'var(--bg-surface)' }}>
-                                                                                    <div className="h-full rounded-full transition-all duration-700"
-                                                                                         style={{ width: `${(bar.value / total) * 100}%`, background: bar.color }} />
-                                                                                </div>
-                                                                                <span className="w-5 font-bold" style={{ color: 'var(--text-primary)' }}>{bar.value}</span>
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                );
-                                                            })()}
-
-                                                            {/* Upgrades / Downgrades */}
-                                                            {analystData.history?.length > 0 && (
-                                                                <div className="space-y-2">
-                                                                    <h5 className="text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5"
-                                                                        style={{ color: 'var(--text-secondary)' }}>
-                                                                        <Ico name="trendingUp" size={11} /> Upgrades / Downgrades
-                                                                    </h5>
-                                                                    {analystData.history.map((item, i) => {
-                                                                        const isUp = item.action === 'up';
-                                                                        const isDn = item.action === 'down';
-                                                                        return (
-                                                                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl border"
-                                                                                 style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
-                                                                                <Ico name={isUp ? 'arrowUp' : isDn ? 'arrowDown' : 'bolt'} size={14}
-                                                                                     style={{ color: isUp ? 'var(--positive)' : isDn ? 'var(--negative)' : 'var(--accent)', flexShrink: 0 }} />
-                                                                                <div className="flex-1 min-w-0">
-                                                                                    <p className="text-[11px] font-bold truncate" style={{ color: 'var(--text-primary)' }}>
-                                                                                        {item.firm}
-                                                                                    </p>
-                                                                                    <p className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
-                                                                                        {item.fromGrade && <span>{item.fromGrade} → </span>}
-                                                                                        <span className="font-semibold"
-                                                                                              style={{ color: isUp ? 'var(--positive)' : isDn ? 'var(--negative)' : 'var(--accent)' }}>
-                                                                                            {item.toGrade}
-                                                                                        </span>
-                                                                                    </p>
-                                                                                </div>
-                                                                                <div className="text-right shrink-0">
-                                                                                    <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded"
-                                                                                          style={{
-                                                                                              background: isUp ? 'var(--positive-soft)' : isDn ? 'var(--negative-soft)' : 'var(--accent-soft)',
-                                                                                              color: isUp ? 'var(--positive)' : isDn ? 'var(--negative)' : 'var(--accent)',
-                                                                                          }}>
-                                                                                        {isUp ? 'Upgrade' : isDn ? 'Downgrade' : 'Iniciado'}
-                                                                                    </span>
-                                                                                    <p className="text-[9px] mt-0.5 flex items-center justify-end gap-0.5"
-                                                                                       style={{ color: 'var(--text-tertiary)' }}>
-                                                                                        <Ico name="clock" size={8} /> {item.timeAgo}
-                                                                                    </p>
-                                                                                </div>
-                                                                            </div>
-                                                                        );
-                                                                    })}
-                                                                </div>
-                                                            )}
-                                                          </>
-                                                    }
-                                                </div>
-                                            )}
-
-                                            {/* TAB: TradingView */}
-                                            {newsTab === 'tradingview' && (
-                                                <div className="h-[520px] w-full">
-                                                    <Timeline feedMode="symbol" symbol={activeCompany.tvSymbol}
-                                                              colorTheme={theme} width="100%" height="100%"
-                                                              locale="es" isTransparent />
+                                                        </a>
+                                                    ))}
                                                 </div>
                                             )}
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                <p className="text-[10px] text-center opacity-40 pt-4" style={{ color: 'var(--text-tertiary)' }}>
-                    Datos provistos por TradingView, Google News RSS y Yahoo Finance. Infopeso no brinda asesoría financiera.
-                </p>
-            </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </section>
         </main>
     );
 }

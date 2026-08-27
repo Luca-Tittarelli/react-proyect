@@ -1,11 +1,11 @@
 import CarteraClient from './CarteraClient';
 
 export const metadata = {
-    title: 'Seguí tu Cartera de Acciones — Infopeso',
-    description: 'Monitorea tus inversiones en vivo. Análisis fundamental, plan de negocios, múltiplos de valuación y opinión de profesionales para tus acciones argentinas e internacionales.',
+    title: 'Centro de Monitoreo de Fundamentals de Cartera — Infopeso',
+    description: 'Monitoreo consolidado de fundamentals para carteras personales. Múltiplos ponderados (P/E, ROE, Margen, Beta, Dividend Yield), matriz comparativa, diagnósticos y consenso de Wall Street para acciones argentinas e internacionales.',
     openGraph: {
-        title: 'Seguí tu Cartera de Acciones — Infopeso',
-        description: 'Monitorea tus inversiones en vivo. Análisis fundamental, plan de negocios, múltiplos de valuación y opinión de profesionales para tus acciones argentinas e internacionales.',
+        title: 'Centro de Monitoreo de Fundamentals de Cartera — Infopeso',
+        description: 'Monitoreo consolidado de fundamentals para carteras personales. Múltiplos ponderados (P/E, ROE, Margen, Beta, Dividend Yield), matriz comparativa, diagnósticos y consenso de Wall Street para acciones argentinas e internacionales.',
         url: 'https://infopeso.com.ar/Cartera',
         siteName: 'Infopeso',
         locale: 'es_AR',
