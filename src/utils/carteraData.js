@@ -324,10 +324,17 @@ export const PRESETS = [
     }
 ];
 
+CATEGORIES.forEach(cat => {
+    cat.companies.forEach(comp => {
+        comp.category = cat.name;
+    });
+});
+
 export const getCompanyBySymbol = (symbol) => {
+    if (!symbol) return null;
     for (const cat of CATEGORIES) {
         const found = cat.companies.find(c => c.symbol === symbol);
-        if (found) return { ...found, category: cat.name };
+        if (found) return found;
     }
     return null;
 };

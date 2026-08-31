@@ -110,6 +110,9 @@ const BloombergNewsSlider = ({ holdings }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
     const [selectedFilter, setSelectedFilter] = useState('ALL');
+    const [isExpanded, setIsExpanded] = useState(false);
+
+    const holdingsKey = useMemo(() => holdings?.map(h => `${h.symbol}:${h.weight}`).join(',') || '', [holdings]);
 
     useEffect(() => {
         if (!holdings || holdings.length === 0) return;
@@ -118,24 +121,37 @@ const BloombergNewsSlider = ({ holdings }) => {
         const fetchPortfolioNews = async () => {
             setLoading(true);
             try {
-                // Generar query combinada de las empresas en cartera
                 const queries = holdings.map(h => {
                     const comp = getCompanyBySymbol(h.symbol);
                     return comp?.newsQuery || h.symbol;
                 });
                 
-                // Buscar noticias de los últimos 7 días
-                const queryStr = queries.slice(0, 8).join(' OR ');
+                const queryStr = queries.slice(0, 10).join(' OR ');
                 const q = encodeURIComponent(`(${queryStr}) when:7d`);
-                const res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
-                if (!res.ok) throw new Error('Error en RSS');
-                const xml = await res.text();
-                const doc = new DOMParser().parseFromString(xml, 'application/xml');
-                const items = Array.from(doc.querySelectorAll('item')).slice(0, 15).map(item => {
+                let res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
+                
+                let xml = '';
+                if (res.ok) xml = await res.text();
+                
+                let doc = new DOMParser().parseFromString(xml, 'application/xml');
+                let itemsRaw = Array.from(doc.querySelectorAll('item'));
+
+                // Fallback a noticias generales de mercado si la query específica viene vacía
+                if (itemsRaw.length === 0) {
+                    const fallbackQ = encodeURIComponent('(acciones OR merval OR cedears OR bolsa OR empresas) when:7d');
+                    const fallbackRes = await fetch(`/gnews-rss/rss/search?q=${fallbackQ}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
+                    if (fallbackRes.ok) {
+                        const fallbackXml = await fallbackRes.text();
+                        doc = new DOMParser().parseFromString(fallbackXml, 'application/xml');
+                        itemsRaw = Array.from(doc.querySelectorAll('item'));
+                    }
+                }
+
+                const items = itemsRaw.slice(0, 20).map(item => {
                     const title = (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, '');
                     const link = item.querySelector('link')?.textContent || '#';
                     const pubDate = item.querySelector('pubDate')?.textContent || '';
-                    const source = item.querySelector('source')?.textContent || 'Bloomberg';
+                    const source = item.querySelector('source')?.textContent || 'Prensa';
 
                     let timeStr = '';
                     if (pubDate) {
@@ -146,8 +162,7 @@ const BloombergNewsSlider = ({ holdings }) => {
                         else timeStr = `${Math.floor(diff / 86400)}d`;
                     }
 
-                    // Identificar qué empresa de la cartera coincide mejor con la noticia
-                    let matchedSymbol = holdings[0]?.symbol;
+                    let matchedSymbol = holdings[0]?.symbol || 'MERCADO';
                     for (const h of holdings) {
                         const comp = getCompanyBySymbol(h.symbol);
                         const lowerTitle = title.toLowerCase();
@@ -180,7 +195,7 @@ const BloombergNewsSlider = ({ holdings }) => {
 
         fetchPortfolioNews();
         return () => { alive = false; };
-    }, [holdings]);
+    }, [holdingsKey]);
 
     // Filtrar noticias
     const filteredNews = useMemo(() => {
@@ -208,19 +223,36 @@ const BloombergNewsSlider = ({ holdings }) => {
     };
 
     const currentItem = filteredNews[currentIndex] || filteredNews[0];
-    const comp = currentItem ? getCompanyBySymbol(currentItem.symbol) : null;
 
     if (loading) {
         return (
-            <div className="rounded-xl border p-2.5 flex items-center gap-3 animate-pulse"
+            <div className="rounded-xl border p-2.5 sm:px-4 flex items-center gap-3 animate-pulse"
                  style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
-                <div className="w-20 h-5 bg-[var(--bg-surface-hover)] rounded" />
-                <div className="flex-1 h-5 bg-[var(--bg-surface-hover)] rounded" />
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20">
+                    <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ fontFamily: 'var(--font-mono)' }}>
+                        TERMINAL FEED
+                    </span>
+                </div>
+                <div className="h-4 flex-1 bg-[var(--bg-surface-hover)] rounded" />
             </div>
         );
     }
 
-    if (news.length === 0) return null;
+    if (news.length === 0) {
+        return (
+            <div className="rounded-xl border p-2.5 sm:px-4 flex items-center justify-between gap-3"
+                 style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[var(--accent-soft)] text-[var(--accent)] border border-[var(--accent)]/20">
+                    <span className="text-[9px] font-black uppercase tracking-[0.14em]" style={{ fontFamily: 'var(--font-mono)' }}>
+                        TERMINAL FEED
+                    </span>
+                </div>
+                <p className="text-xs opacity-70" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-ui)' }}>
+                    Cargando noticias y novedades de las empresas en cartera...
+                </p>
+            </div>
+        );
+    }
 
     return (
         <div className="rounded-xl border overflow-hidden transition-all shadow-sm"
@@ -291,7 +323,7 @@ const BloombergNewsSlider = ({ holdings }) => {
                     </div>
                 )}
 
-                {/* Controles de Navegación */}
+                {/* Controles de Navegación y Botón Ver Feed */}
                 <div className="flex items-center gap-1 self-end sm:self-center shrink-0">
                     <span className="text-[10px] font-mono opacity-50 mr-1" style={{ color: 'var(--text-tertiary)' }}>
                         {currentIndex + 1}/{filteredNews.length}
@@ -308,8 +340,66 @@ const BloombergNewsSlider = ({ holdings }) => {
                             style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
                         <Ico name="chevronRight" size={11} />
                     </button>
+
+                    <button onClick={() => setIsExpanded(prev => !prev)}
+                            title={isExpanded ? 'Ocultar feed' : 'Ver todas las noticias'}
+                            className="flex items-center gap-1 px-2.5 py-1 ml-1 rounded text-[10px] font-bold border transition-all cursor-pointer hover:border-[var(--accent)]"
+                            style={{
+                                background: isExpanded ? 'var(--accent)' : 'var(--bg-page)',
+                                color: isExpanded ? 'white' : 'var(--text-secondary)',
+                                borderColor: 'var(--border-subtle)'
+                            }}>
+                        <Ico name="newspaper" size={11} />
+                        <span>{isExpanded ? 'Ocultar' : `Ver Noticias (${filteredNews.length})`}</span>
+                    </button>
                 </div>
             </div>
+
+            {/* Panel de Noticias Desplegable de la Cartera */}
+            {isExpanded && (
+                <div className="p-4 border-t space-y-3" style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)' }}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-ui)' }}>
+                                Noticias Destacadas de la Cartera
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded font-mono" style={{ background: 'var(--bg-page)', color: 'var(--text-tertiary)', border: '1px solid var(--border-subtle)' }}>
+                                {filteredNews.length} artículos
+                            </span>
+                        </div>
+                        {selectedFilter !== 'ALL' && (
+                            <button onClick={() => setSelectedFilter('ALL')}
+                                    className="text-[10px] text-[var(--accent)] hover:underline font-semibold cursor-pointer">
+                                Ver todas las empresas
+                            </button>
+                        )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {filteredNews.map((n, idx) => (
+                            <a key={idx} href={n.link} target="_blank" rel="noopener noreferrer"
+                               className="p-3 rounded-lg border flex flex-col justify-between transition-all hover:border-[var(--accent)] hover:bg-[var(--bg-surface-hover)] group"
+                               style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
+                                <div>
+                                    <div className="flex items-center justify-between text-[10px] mb-2" style={{ color: 'var(--text-tertiary)' }}>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="px-1.5 py-0.5 rounded font-mono font-bold text-[9px] text-[var(--accent)] bg-[var(--accent-soft)]">
+                                                {n.symbol}
+                                            </span>
+                                            <span className="font-medium">{n.source}</span>
+                                        </div>
+                                        <span className="font-mono">{n.timeAgo}</span>
+                                    </div>
+                                    <p className="text-xs font-semibold leading-snug group-hover:text-[var(--accent)] transition-colors line-clamp-2"
+                                       style={{ color: 'var(--text-primary)' }}>
+                                        {n.title}
+                                    </p>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
@@ -565,6 +655,7 @@ export default function CarteraClient() {
     // Deep Dive News
     const [googleNews, setGoogleNews] = useState([]);
     const [newsLoading, setNewsLoading] = useState(false);
+    const [showMoreCompanyNews, setShowMoreCompanyNews] = useState(false);
 
     // ── Mount & LocalStorage ──────────────────────────────────────────────────
     useEffect(() => {
@@ -634,13 +725,17 @@ export default function CarteraClient() {
         return calculatePortfolioMetrics(holdings, fundamentalsMap);
     }, [holdings, fundamentalsMap]);
 
-    const activeCompany = getCompanyBySymbol(detailSymbol) ||
-        (holdings.length > 0 ? getCompanyBySymbol(holdings[0].symbol) : null);
+    const activeCompany = useMemo(() => {
+        return getCompanyBySymbol(detailSymbol) ||
+            (holdings.length > 0 ? getCompanyBySymbol(holdings[0].symbol) : null);
+    }, [detailSymbol, holdings]);
+
     const activeFundamentals = activeCompany ? fundamentalsMap[activeCompany.symbol] || {} : {};
 
     // ── Google News para Deep Dive ────────────────────────────────────────────
     useEffect(() => {
-        if (!activeCompany) return;
+        setShowMoreCompanyNews(false);
+        if (!activeCompany?.newsQuery) return;
         let alive = true;
         const fetchNews = async () => {
             setNewsLoading(true); setGoogleNews([]);
@@ -650,7 +745,7 @@ export default function CarteraClient() {
                 if (!res.ok) throw new Error();
                 const xml = await res.text();
                 const doc = new DOMParser().parseFromString(xml, 'application/xml');
-                const parsed = Array.from(doc.querySelectorAll('item')).slice(0, 5).map(item => {
+                const parsed = Array.from(doc.querySelectorAll('item')).slice(0, 10).map(item => {
                     const pubDate = item.querySelector('pubDate')?.textContent || '';
                     let timeStr = '';
                     if (pubDate) {
@@ -676,7 +771,7 @@ export default function CarteraClient() {
         };
         fetchNews();
         return () => { alive = false; };
-    }, [activeCompany]);
+    }, [activeCompany?.symbol, activeCompany?.newsQuery]);
 
     if (!isMounted) return null;
 
@@ -1196,7 +1291,7 @@ export default function CarteraClient() {
                                                 </p>
                                             ) : (
                                                 <div className="space-y-2">
-                                                    {googleNews.slice(0, 3).map((n, i) => (
+                                                    {googleNews.slice(0, showMoreCompanyNews ? 10 : 5).map((n, i) => (
                                                         <a key={i} href={n.link} target="_blank" rel="noopener noreferrer"
                                                            className="block p-2 rounded-lg border text-xs hover:bg-[var(--bg-surface-hover)] transition-colors"
                                                            style={{ background: 'var(--bg-page)', borderColor: 'var(--border-subtle)' }}>
@@ -1209,6 +1304,12 @@ export default function CarteraClient() {
                                                             </p>
                                                         </a>
                                                     ))}
+                                                    {googleNews.length > 5 && (
+                                                        <button onClick={() => setShowMoreCompanyNews(prev => !prev)}
+                                                                className="w-full mt-1.5 py-1 text-[11px] font-semibold text-[var(--accent)] hover:underline flex items-center justify-center gap-1 cursor-pointer">
+                                                            {showMoreCompanyNews ? 'Ver menos noticias' : `Ver más noticias (${googleNews.length})`}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
