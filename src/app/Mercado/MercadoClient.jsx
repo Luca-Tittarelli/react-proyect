@@ -2,6 +2,7 @@
 
 import { TickerTape, MarketOverview } from "react-ts-tradingview-widgets";
 import { useTheme } from '@/hooks/useTheme';
+import { TradingViewContainer } from '@/components/TradingViewContainer';
 
 export default function MercadoClient() {
     const [theme] = useTheme();
@@ -28,40 +29,49 @@ export default function MercadoClient() {
                 <div className="max-w-[1200px] mx-auto space-y-8">
                     <div
                         className="rounded-[12px] overflow-hidden pointer-events-none"
-                        style={{ border: '1px solid var(--border-subtle)' }}
+                        style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}
                     >
-                        <TickerTape
-                            colorTheme={theme}
-                            displayMode="regular"
-                            locale="es"
-                            showSymbolLogo={true}
-                            symbols={[
-                                { description: "S&P 500", proName: "SP:SPX" },
-                                { description: "MERVAL", proName: "BCBA:IMV" },
-                                { description: "Bitcoin", proName: "BINANCE:BTCUSDT" },
-                                { description: "Soja", proName: "CAPITALCOM:SOYBEAN" },
-                                { description: "Maíz", proName: "CAPITALCOM:CORN" },
-                                { description: "Petróleo WTI", proName: "TVC:USOIL" },
-                                { description: "Oro", proName: "OANDA:XAUUSD" },
-                                { description: "Cobre", proName: "OANDA:XCUUSD" },
-                            ]}
-                        />
+                        <TradingViewContainer minHeight="46px">
+                            {(activeTheme) => (
+                                <TickerTape
+                                    colorTheme={activeTheme}
+                                    isTransparent={true}
+                                    displayMode="regular"
+                                    locale="es"
+                                    showSymbolLogo={true}
+                                    symbols={[
+                                        { description: "S&P 500", proName: "SP:SPX" },
+                                        { description: "MERVAL", proName: "BCBA:IMV" },
+                                        { description: "Bitcoin", proName: "BINANCE:BTCUSDT" },
+                                        { description: "Soja", proName: "CAPITALCOM:SOYBEAN" },
+                                        { description: "Maíz", proName: "CAPITALCOM:CORN" },
+                                        { description: "Petróleo WTI", proName: "TVC:USOIL" },
+                                        { description: "Oro", proName: "OANDA:XAUUSD" },
+                                        { description: "Cobre", proName: "OANDA:XCUUSD" },
+                                    ]}
+                                />
+                            )}
+                        </TradingViewContainer>
                     </div>
 
                     <div
                         className="rounded-[12px] overflow-hidden"
                         style={{
                             border: '1px solid var(--border-subtle)',
+                            background: 'var(--bg-surface)',
                             height: '720px',
                         }}
                     >
-                        <MarketOverview
-                            colorTheme={theme}
-                            height="100%"
-                            width="100%"
-                            showFloatingTooltip
-                            dateRange="12M"
-                            locale="es"
+                        <TradingViewContainer height="720px">
+                            {(activeTheme) => (
+                                <MarketOverview
+                                    colorTheme={activeTheme}
+                                    isTransparent={true}
+                                    height="100%"
+                                    width="100%"
+                                    showFloatingTooltip
+                                    dateRange="12M"
+                                    locale="es"
                             tabs={[
                                 {
                                     title: "Mercado Argentino",
@@ -120,10 +130,12 @@ export default function MercadoClient() {
                                         { s: "BINANCE:AVAXUSDT", d: "Avalanche" },
                                         { s: "BINANCE:LINKUSDT", d: "Chainlink" },
                                         { s: "BINANCE:DOTUSDT", d: "Polkadot" },
-                                    ]
+                                    ],
                                 },
                             ]}
                         />
+                    )}
+                        </TradingViewContainer>
                     </div>
 
                     <p className="text-xs text-center" style={{ color: 'var(--text-tertiary)' }}>

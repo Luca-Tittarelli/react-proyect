@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { fetchFinancialNews } from '../utils/newsFetcher';
 
-export function useNews() {
-    const [news, setNews] = useState([]);
-    const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
+export function useNews(initialNews = null) {
+    const [news, setNews] = useState(initialNews || []);
+    const [status, setStatus] = useState(initialNews?.length > 0 ? 'success' : 'loading');
 
     useEffect(() => {
+        if (initialNews && initialNews.length > 0) return;
         let cancelled = false;
         
         setStatus('loading');
@@ -21,7 +22,8 @@ export function useNews() {
             });
 
         return () => { cancelled = true; };
-    }, []);
+    }, [initialNews]);
 
     return { news, status };
 }
+

@@ -9,6 +9,7 @@
 
 /* ─── Color Tokens — Light ───────────────────────────────────── */
 :root {
+  color-scheme: light;
   --bg-page:            #F7F6F2;
   --bg-surface:         #FFFFFF;
   --bg-surface-hover:   #F0EFE9;
@@ -37,6 +38,7 @@
 
 /* ─── Color Tokens — Dark ────────────────────────────────────── */
 .dark {
+  color-scheme: dark;
   --bg-page:            #0F0F0D;
   --bg-surface:         #171715;
   --bg-surface-hover:   #1F1F1C;

@@ -324,19 +324,17 @@ export const PRESETS = [
     }
 ];
 
+const COMPANY_MAP = new Map();
 CATEGORIES.forEach(cat => {
-    cat.companies.forEach(comp => {
-        comp.category = cat.name;
+    cat.companies.forEach(company => {
+        company.category = cat.name;
+        COMPANY_MAP.set(company.symbol, Object.freeze({ ...company, category: cat.name }));
     });
 });
 
 export const getCompanyBySymbol = (symbol) => {
     if (!symbol) return null;
-    for (const cat of CATEGORIES) {
-        const found = cat.companies.find(c => c.symbol === symbol);
-        if (found) return found;
-    }
-    return null;
+    return COMPANY_MAP.get(symbol) || null;
 };
 
 export const hasSector = (portfolioHoldings, sectorName) => {

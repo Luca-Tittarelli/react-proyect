@@ -87,8 +87,8 @@ function NewsCard({ item }) {
     );
 }
 
-export function NewsFeed() {
-    const { news, status } = useNews();
+export function NewsFeed({ initialNews = null }) {
+    const { news, status } = useNews(initialNews);
     const [activeCategory, setActiveCategory] = useState('all');
 
     const filtered = activeCategory === 'all'

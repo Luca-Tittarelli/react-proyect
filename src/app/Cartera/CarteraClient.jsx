@@ -11,6 +11,7 @@ import {
     calculatePortfolioMetrics,
 } from '@/utils/carteraData';
 import { MiniChart, CompanyProfile, FundamentalData } from 'react-ts-tradingview-widgets';
+import { TradingViewContainer } from '@/components/TradingViewContainer';
 
 // ─── Iconos SVG inline ────────────────────────────────────────────────────────
 const PATHS = {
@@ -126,42 +127,56 @@ const BloombergNewsSlider = ({ holdings }) => {
                     return comp?.newsQuery || h.symbol;
                 });
                 
-                const queryStr = queries.slice(0, 10).join(' OR ');
-                const q = encodeURIComponent(`(${queryStr}) when:7d`);
-                let res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
-                
-                let xml = '';
-                if (res.ok) xml = await res.text();
-                
-                let doc = new DOMParser().parseFromString(xml, 'application/xml');
-                let itemsRaw = Array.from(doc.querySelectorAll('item'));
+                const queryStr = queries.slice(0, 8).join(' OR ');
+                let rawNews = [];
 
-                // Fallback a noticias generales de mercado si la query específica viene vacía
-                if (itemsRaw.length === 0) {
-                    const fallbackQ = encodeURIComponent('(acciones OR merval OR cedears OR bolsa OR empresas) when:7d');
-                    const fallbackRes = await fetch(`/gnews-rss/rss/search?q=${fallbackQ}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
-                    if (fallbackRes.ok) {
-                        const fallbackXml = await fallbackRes.text();
-                        doc = new DOMParser().parseFromString(fallbackXml, 'application/xml');
-                        itemsRaw = Array.from(doc.querySelectorAll('item'));
+                try {
+                    const apiRes = await fetch(`/api/news?q=${encodeURIComponent(queryStr)}`);
+                    if (apiRes.ok) {
+                        rawNews = await apiRes.json();
                     }
+                } catch {
+                    // fallback to RSS
                 }
 
-                const items = itemsRaw.slice(0, 20).map(item => {
-                    const title = (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, '');
-                    const link = item.querySelector('link')?.textContent || '#';
-                    const pubDate = item.querySelector('pubDate')?.textContent || '';
-                    const source = item.querySelector('source')?.textContent || 'Prensa';
+                if (!rawNews || rawNews.length === 0) {
+                    const q = encodeURIComponent(`(${queryStr}) when:7d`);
+                    let res = await fetch(`/gnews-rss/rss/search?q=${q}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
+                    let xml = '';
+                    if (res.ok) xml = await res.text();
+                    let doc = new DOMParser().parseFromString(xml, 'application/xml');
+                    let itemsRaw = Array.from(doc.querySelectorAll('item'));
 
-                    let timeStr = '';
-                    if (pubDate) {
-                        const diff = Math.floor((Date.now() - new Date(pubDate)) / 1000);
-                        if (diff < 60) timeStr = 'ahora';
-                        else if (diff < 3600) timeStr = `${Math.floor(diff / 60)}m`;
-                        else if (diff < 86400) timeStr = `${Math.floor(diff / 3600)}h`;
-                        else timeStr = `${Math.floor(diff / 86400)}d`;
+                    // Fallback a noticias generales de mercado si la query específica viene vacía
+                    if (itemsRaw.length === 0) {
+                        const fallbackQ = encodeURIComponent('(acciones OR merval OR cedears OR bolsa OR empresas) when:7d');
+                        const fallbackRes = await fetch(`/gnews-rss/rss/search?q=${fallbackQ}&hl=es-419&gl=AR&ceid=AR%3Aes-419`);
+                        if (fallbackRes.ok) {
+                            const fallbackXml = await fallbackRes.text();
+                            doc = new DOMParser().parseFromString(fallbackXml, 'application/xml');
+                            itemsRaw = Array.from(doc.querySelectorAll('item'));
+                        }
                     }
 
+                    rawNews = itemsRaw.slice(0, 20).map(item => {
+                        const title = (item.querySelector('title')?.textContent || '').replace(/\s+-\s+[^-\n]+$/, '');
+                        const link = item.querySelector('link')?.textContent || '#';
+                        const pubDate = item.querySelector('pubDate')?.textContent || '';
+                        const source = item.querySelector('source')?.textContent || 'Prensa';
+                        let timeStr = '';
+                        if (pubDate) {
+                            const diff = Math.floor((Date.now() - new Date(pubDate)) / 1000);
+                            if (diff < 60) timeStr = 'ahora';
+                            else if (diff < 3600) timeStr = `${Math.floor(diff / 60)}m`;
+                            else if (diff < 86400) timeStr = `${Math.floor(diff / 3600)}h`;
+                            else timeStr = `${Math.floor(diff / 86400)}d`;
+                        }
+                        return { title, link, timeAgo: timeStr, source };
+                    });
+                }
+
+                const items = rawNews.slice(0, 20).map(item => {
+                    const title = (item.title || '').replace(/\s+-\s+[^-\n]+$/, '');
                     let matchedSymbol = holdings[0]?.symbol || 'MERCADO';
                     for (const h of holdings) {
                         const comp = getCompanyBySymbol(h.symbol);
@@ -177,9 +192,9 @@ const BloombergNewsSlider = ({ holdings }) => {
 
                     return {
                         title,
-                        link,
-                        timeAgo: timeStr,
-                        source,
+                        link: item.link || '#',
+                        timeAgo: item.timeAgo || '',
+                        source: item.source || 'Bloomberg',
                         symbol: matchedSymbol,
                     };
                 });
@@ -1225,16 +1240,24 @@ export default function CarteraClient() {
 
                                         {/* TradingView MiniChart */}
                                         <div className="rounded-xl border overflow-hidden"
-                                             style={{ borderColor: 'var(--border-subtle)', height: '360px' }}>
-                                            <MiniChart symbol={activeCompany.tvSymbol} colorTheme={theme}
-                                                       width="100%" height="100%" locale="es" isTransparent autosize />
+                                             style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)', height: '360px' }}>
+                                            <TradingViewContainer height="360px">
+                                                {(activeTheme) => (
+                                                    <MiniChart key={`${activeCompany.tvSymbol}-${activeTheme}`} symbol={activeCompany.tvSymbol} colorTheme={activeTheme}
+                                                               width="100%" height="100%" locale="es" isTransparent autosize />
+                                                )}
+                                            </TradingViewContainer>
                                         </div>
 
                                         {/* TradingView Fundamentals */}
                                         <div className="rounded-xl border overflow-hidden"
-                                             style={{ borderColor: 'var(--border-subtle)', height: '240px' }}>
-                                            <FundamentalData symbol={activeCompany.tvSymbol} colorTheme={theme}
-                                                             width="100%" height="100%" locale="es" isTransparent displayMode="compact" />
+                                             style={{ borderColor: 'var(--border-subtle)', background: 'var(--bg-surface)', height: '240px' }}>
+                                            <TradingViewContainer height="240px">
+                                                {(activeTheme) => (
+                                                    <FundamentalData key={`${activeCompany.tvSymbol}-${activeTheme}`} symbol={activeCompany.tvSymbol} colorTheme={activeTheme}
+                                                                     width="100%" height="100%" locale="es" isTransparent displayMode="compact" />
+                                                )}
+                                            </TradingViewContainer>
                                         </div>
                                     </div>
 

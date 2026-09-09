@@ -1,65 +1,81 @@
-import EmbedCodeBox from './WidgetsClient';
+import Link from 'next/link';
+import WidgetsGeneratorClient from './WidgetsGeneratorClient';
 
 export const metadata = {
-    title: 'Widgets Financieros Gratuitos para tu Web — Infopeso',
-    description: 'Embebe cotizaciones del dólar en tiempo real en tu blog o sitio web de forma gratuita. Personalizable y fácil de integrar.',
+    title: 'Widgets Financieros Gratis para tu Web — Cotizaciones en Tiempo Real | Infopeso',
+    description: 'Embebé widgets interactivos gratuitos de cotizaciones del Dólar Blue, MEP, Oficial y Mercados en tu sitio web, blog o portal de noticias. Código iframe listo para copiar y pegar.',
+    openGraph: {
+        title: 'Widgets Financieros Gratis para tu Web — Infopeso',
+        description: 'Embebé widgets interactivos gratuitos de cotizaciones del Dólar Blue, MEP, Oficial y Mercados en tu sitio web, blog o portal de noticias. Código iframe listo para copiar y pegar.',
+        url: 'https://infopeso.com.ar/widgets',
+        siteName: 'Infopeso',
+        locale: 'es_AR',
+        type: 'website',
+        images: [{ url: 'https://infopeso.com.ar/logo.png' }],
+    },
     alternates: {
         canonical: 'https://infopeso.com.ar/widgets',
     }
 };
 
-const EMBED_CODE = `<iframe src="https://infopeso.com.ar/widgets/dolar" width="320" height="120" style="border:none; border-radius:12px; background:#171715;"></iframe>`;
+export default function WidgetsPage() {
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Inicio", "item": "https://infopeso.com.ar" },
+            { "@type": "ListItem", "position": 2, "name": "Widgets Financieros", "item": "https://infopeso.com.ar/widgets" }
+        ]
+    };
 
-export default function Page() {
     return (
-        <main className="min-h-screen pt-24 pb-16 px-5 sm:px-8">
-            <article className="max-w-[800px] mx-auto p-6 sm:p-8 rounded-xl space-y-8" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                <div>
-                    <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', color: 'var(--text-primary)' }}>
-                        Widgets Financieros
-                    </h1>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        Agrega cotizaciones en tiempo real del dólar (Blue y MEP) a tu propio blog, periódico digital o sitio web con un simple bloque de código de forma gratuita.
+        <main className="min-h-screen pt-20 pb-16 px-5 sm:px-8 max-w-[1200px] mx-auto space-y-12">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+            />
+
+            {/* Hero Section */}
+            <div className="text-center max-w-3xl mx-auto space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold"
+                     style={{ background: 'var(--accent-soft)', color: 'var(--accent)' }}>
+                    <span>💻 Herramientas para Webmasters y Medios</span>
+                </div>
+                <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight" style={{ color: 'var(--text-primary)' }}>
+                    Widgets de Cotizaciones Financieras para tu Web
+                </h1>
+                <p className="text-base sm:text-lg leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                    Agregá cotizaciones del Dólar Blue, MEP, Oficial y seguimiento de cartera en tu blog o portal en menos de 1 minuto. Livianos, responsivos y con actualización automática.
+                </p>
+            </div>
+
+            {/* Interactive Widget Configurator */}
+            <WidgetsGeneratorClient />
+
+            {/* Features & Integration Guide */}
+            <section className="pt-12 border-t grid grid-cols-1 md:grid-cols-3 gap-6" style={{ borderColor: 'var(--border-subtle)' }}>
+                <div className="p-6 rounded-2xl border space-y-2" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                    <div className="text-2xl">⚡</div>
+                    <h3 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Ultra Livianos</h3>
+                    <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        Cargan en milisegundos sin afectar el rendimiento ni el Core Web Vitals de tu sitio.
                     </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                    {/* Vista Previa */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
-                            Vista Previa del Widget
-                        </h3>
-                        <div className="flex justify-center p-6 rounded-lg" style={{ background: 'var(--bg-page)', border: '1px solid var(--border-subtle)' }}>
-                            <iframe 
-                                src="/widgets/dolar" 
-                                width="300" 
-                                height="110" 
-                                style={{ border: 'none', borderRadius: '12px', background: '#171715' }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Código a Copiar — Client Component handles onClick */}
-                    <div className="space-y-3">
-                        <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-tertiary)' }}>
-                            Código HTML a Copiar
-                        </h3>
-                        <EmbedCodeBox code={EMBED_CODE} />
-                    </div>
+                <div className="p-6 rounded-2xl border space-y-2" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                    <div className="text-2xl">🔄</div>
+                    <h3 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Actualización Automática</h3>
+                    <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        Los datos se refrescan permanentemente sin necesidad de que recargues tu servidor.
+                    </p>
                 </div>
-
-                <div className="pt-6 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-                    <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-                        Ventajas de nuestro Widget
-                    </h3>
-                    <ul className="text-xs space-y-2 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        <li>✓ <strong>100% Gratuito y Limpio:</strong> Sin anuncios ni scripts rastreadores invasivos de terceros.</li>
-                        <li>✓ <strong>Actualización Automática:</strong> Los datos se actualizan directamente del Banco Central y mercado informal cada 60 segundos.</li>
-                        <li>✓ <strong>Diseño Premium y Oscuro:</strong> Diseñado en glassmorphism oscuro para adaptarse elegantemente a cualquier sitio web.</li>
-                        <li>✓ <strong>Carga Ultrarrápida:</strong> Optimizado a nivel de servidor, consumiendo prácticamente cero recursos de ancho de banda de tu sitio.</li>
-                    </ul>
+                <div className="p-6 rounded-2xl border space-y-2" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border-subtle)' }}>
+                    <div className="text-2xl">🎨</div>
+                    <h3 className="font-bold text-base" style={{ color: 'var(--text-primary)' }}>Modo Oscuro & Claro</h3>
+                    <p className="text-xs sm:text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        Se adaptan visualmente al diseño y paleta de colores de tu página web.
+                    </p>
                 </div>
-            </article>
+            </section>
         </main>
     );
 }

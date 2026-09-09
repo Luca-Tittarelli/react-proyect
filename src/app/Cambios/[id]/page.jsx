@@ -61,10 +61,9 @@ async function getCurrencyHistory(meta) {
         if (meta.casa === 'euro' || meta.casa === 'real') {
             return null; // No historical data available in current APIs
         }
-        const res = await fetch(dolarHistoricoAPI, { next: { revalidate: 60 } });
+        const res = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/${meta.casa}`, { next: { revalidate: 300 } });
         if (!res.ok) return null;
-        const data = await res.json();
-        return data.filter(item => item.casa === meta.casa) || [];
+        return await res.json();
     } catch {
         return null;
     }

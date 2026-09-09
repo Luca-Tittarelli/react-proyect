@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { calculateBondMetrics } from '@/utils/bondCalculator';
 import { MiniChart } from 'react-ts-tradingview-widgets';
 import { useTheme } from '@/hooks/useTheme';
+import { TradingViewContainer } from '@/components/TradingViewContainer';
 
 export default function BonoDetalleClient({ ticker, bond }) {
     const [theme] = useTheme();
@@ -87,7 +88,11 @@ export default function BonoDetalleClient({ ticker, bond }) {
                             <span className="source-badge">TradingView</span>
                         </div>
                         <div style={{ height: '135px' }}>
-                            <MiniChart colorTheme={theme} width="100%" height="100%" symbol={`BCBA:${ticker}`} locale="es" isTransparent={true} />
+                            <TradingViewContainer height="135px">
+                                {(activeTheme) => (
+                                    <MiniChart key={`bono-${ticker}-${activeTheme}`} colorTheme={activeTheme} width="100%" height="100%" symbol={`BCBA:${ticker}`} locale="es" isTransparent={true} />
+                                )}
+                            </TradingViewContainer>
                         </div>
                     </div>
 

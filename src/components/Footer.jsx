@@ -20,27 +20,32 @@ export function Footer() {
                         className="text-sm font-semibold uppercase tracking-widest mb-4"
                         style={{ color: 'var(--text-tertiary)' }}
                     >
-                        Acerca de
+                        Acerca de Infopeso
                     </h3>
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                        Infopeso es una plataforma digital de datos financieros argentinos.
-                        Centraliza información actualizada sobre el dólar, variables monetarias
-                        del BCRA, inflación y mercados para facilitar la toma de decisiones.
+                        Infopeso es una plataforma abierta de datos financieros argentinos y seguimiento inteligente de carteras.
+                        Centraliza información sobre el dólar, variables monetarias del BCRA, bonos, acciones y CEDEARs para potenciar tus decisiones de inversión.
                     </p>
-                    <a
-                        href="https://x.com/infopeso"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 mt-4 text-sm font-medium transition-colors hover:underline"
-                        style={{ color: 'var(--accent)' }}
-                    >
-                        <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
-                            <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
-                        </svg>
-                        Seguinos en X / Twitter
-                    </a>
+                    <div className="flex items-center gap-4 mt-4">
+                        <a
+                            href="https://x.com/infopeso"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:underline"
+                            style={{ color: 'var(--accent)' }}
+                        >
+                            <svg className="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 4l11.733 16h4.267l-11.733 -16z" />
+                                <path d="M4 20l6.768 -6.768m2.46 -2.46l6.772 -6.772" />
+                            </svg>
+                            X / Twitter
+                        </a>
+                        <span>·</span>
+                        <Link href="/widgets" className="text-sm font-medium hover:underline text-accent">
+                            Widgets para tu web
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Col 2 — Sources */}
@@ -54,9 +59,9 @@ export function Footer() {
                     <ul className="space-y-2 text-sm">
                         {[
                             { label: 'BCRA — Variables monetarias', href: 'https://bcra.gob.ar/Catalogo/apis.asp?fileName=principales-variables-v2&sectionName=Estad%EDsticas' },
-                            { label: 'DolarAPI — Cotizaciones', href: 'https://dolarapi.com/' },
-                            { label: 'ArgentinaDatos — Riesgo País', href: 'https://argentinadatos.com/' },
-                            { label: 'TradingView — Mercados', href: 'https://tradingview.com/' },
+                            { label: 'DolarAPI — Cotizaciones en vivo', href: 'https://dolarapi.com/' },
+                            { label: 'ArgentinaDatos — Riesgo País y Series', href: 'https://argentinadatos.com/' },
+                            { label: 'TradingView — Mercados globales', href: 'https://tradingview.com/' },
                         ].map(({ label, href }) => (
                             <li key={href}>
                                 <a
@@ -73,32 +78,39 @@ export function Footer() {
                     </ul>
                 </div>
 
-                {/* Col 3 — Support */}
+                {/* Col 3 — Support & Portfolio CTA */}
                 <div>
                     <h3
                         className="text-sm font-semibold uppercase tracking-widest mb-4"
                         style={{ color: 'var(--text-tertiary)' }}
                     >
-                        Apoyar el proyecto
+                        Herramientas Destacadas
                     </h3>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                        Infopeso es un proyecto independiente sin fines de lucro.
-                        Si te resulta útil, podés invitarnos un cafecito.
-                    </p>
-                    <a
-                        href="https://cafecito.app/ucode-wd"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all"
-                        style={{
-                            background: 'var(--bg-surface-hover)',
-                            border: '1px solid var(--border-subtle)',
-                            color: 'var(--text-primary)',
-                        }}
-                    >
-                        <img src="https://cdn.cafecito.app/imgs/cafecito_logo.svg" alt="Cafecito" className="h-5" />
-                        Invitar un cafecito
-                    </a>
+                    <div className="space-y-3">
+                        <Link 
+                            href="/Cartera"
+                            className="block p-3 rounded-xl border transition-all hover:scale-[1.02]"
+                            style={{ background: 'var(--bg-surface-hover)', borderColor: 'var(--accent)' }}
+                        >
+                            <div className="text-xs font-bold text-accent">⚡ SEGUÍ TU CARTERA</div>
+                            <div className="text-xs text-[var(--text-secondary)] mt-0.5">Diagnóstico y múltiplos de acciones argentinas y CEDEARs.</div>
+                        </Link>
+
+                        <a
+                            href="https://cafecito.app/ucode-wd"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all border"
+                            style={{
+                                background: 'var(--bg-surface-hover)',
+                                borderColor: 'var(--border-subtle)',
+                                color: 'var(--text-primary)',
+                            }}
+                        >
+                            <img src="https://cdn.cafecito.app/imgs/cafecito_logo.svg" alt="Cafecito" className="h-4" />
+                            Invitar un cafecito
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -121,39 +133,41 @@ export function Footer() {
                     </div>
                     <div>
                         <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                            Macroeconomía (BCRA / INDEC)
+                            Macroeconomía & Renta Fija
                         </h4>
                         <ul className="space-y-1.5">
                             <li><Link href="/Economia/riesgo-pais" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Riesgo País Argentina</Link></li>
                             <li><Link href="/Economia/27" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Inflación Mensual INDEC</Link></li>
                             <li><Link href="/Economia/1" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Reservas Internacionales BCRA</Link></li>
                             <li><Link href="/Economia/15" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Base Monetaria</Link></li>
-                            <li><Link href="/Economia/160" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Tasa de Política Monetaria</Link></li>
-                            <li><Link href="/Economia/32" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Coeficiente CER</Link></li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                            Mercados y Renta Fija
-                        </h4>
-                        <ul className="space-y-1.5">
                             <li><Link href="/RentaFija/al30" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Bono AL30 (Bonaar 2030)</Link></li>
                             <li><Link href="/RentaFija/gd30" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Bono GD30 (Global 2030)</Link></li>
-                            <li><Link href="/Mercado" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Mercado Financiero</Link></li>
-                            <li><Link href="/Empresas" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Acciones y CEDEARs</Link></li>
                         </ul>
                     </div>
                     <div>
                         <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
-                            Calculadoras y pSEO
+                            Guías de Inversión
                         </h4>
                         <ul className="space-y-1.5">
-                            <li><Link href="/Cambios/calculadora-pesos-a-dolar-blue" className="hover:underline" style={{ color: 'var(--accent)' }}>Calculadora Dólar Blue</Link></li>
-                            <li><Link href="/Cambios/calculadora-dolar-tarjeta" className="hover:underline" style={{ color: 'var(--accent)' }}>Calculadora Dólar Tarjeta</Link></li>
-                            <li><Link href="/" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Inicio — Dashboard</Link></li>
-                            <li><Link href="/Cambios" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Divisas</Link></li>
-                            <li><Link href="/Economia" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Macroeconomía</Link></li>
-                            <li><Link href="/RentaFija" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Hub de Renta Fija</Link></li>
+                            <li><Link href="/guias" className="hover:underline font-bold text-accent">Ver Todas las Guías →</Link></li>
+                            <li><Link href="/guias/armar-cartera-inversiones-argentina" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Cómo Armar una Cartera</Link></li>
+                            <li><Link href="/guias/que-son-cedears-como-invertir" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Qué son los CEDEARs</Link></li>
+                            <li><Link href="/guias/dolar-mep-vs-ccl-vs-blue" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Dólar MEP vs CCL vs Blue</Link></li>
+                            <li><Link href="/guias/bonos-argentinos-al30-vs-gd30" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Bonos AL30 vs GD30</Link></li>
+                            <li><Link href="/guias/acciones-vaca-muerta-ypf-vista-pampa" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Acciones de Vaca Muerta</Link></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--text-tertiary)' }}>
+                            Herramientas y Portafolio
+                        </h4>
+                        <ul className="space-y-1.5">
+                            <li><Link href="/Cartera" className="hover:underline font-bold" style={{ color: 'var(--accent)' }}>Tracker de Cartera Gratis</Link></li>
+                            <li><Link href="/widgets" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Widgets para Webmasters</Link></li>
+                            <li><Link href="/Cambios/calculadora-pesos-a-dolar-blue" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Calculadora Dólar Blue</Link></li>
+                            <li><Link href="/Cambios/calculadora-dolar-tarjeta" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Calculadora Dólar Tarjeta</Link></li>
+                            <li><Link href="/Empresas" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Terminal de Empresas</Link></li>
+                            <li><Link href="/Mercado" className="hover:underline" style={{ color: 'var(--text-secondary)' }}>Mercado Financiero</Link></li>
                         </ul>
                     </div>
                 </div>
@@ -176,8 +190,8 @@ export function Footer() {
                             <Link href="/contacto" className="hover:underline">Contacto</Link>
                         </div>
                     </div>
-                    <p className="text-center sm:text-right max-w-sm">
-                        El contenido de esta página es exclusivamente informativo y no constituye asesoramiento financiero.
+                    <p className="text-center sm:text-right max-w-md leading-normal text-[11px]">
+                        El contenido, simuladores y datos de Infopeso son de carácter estrictamente informativo y educativo. No constituyen asesoramiento financiero, recomendación de inversión ni oferta de valores negociables (Ley N° 26.831 CNV).
                     </p>
                 </div>
             </div>

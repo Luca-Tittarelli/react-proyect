@@ -40,9 +40,16 @@ async function getCotizaciones() {
 
 async function getDolarHistorico() {
     try {
-        const res = await fetch(dolarHistoricoAPI, { next: { revalidate: 60 } });
-        if (!res.ok) throw new Error();
-        return await res.json();
+        const casas = ['oficial', 'blue', 'bolsa', 'contadoconliqui', 'tarjeta', 'cripto'];
+        const results = await Promise.all(
+            casas.map(async (casa) => {
+                const res = await fetch(`https://api.argentinadatos.com/v1/cotizaciones/dolares/${casa}`, { next: { revalidate: 300 } });
+                if (!res.ok) return [];
+                const data = await res.json();
+                return data.slice(-45); // last ~45 days for 1-month sparkline
+            })
+        );
+        return results.flat();
     } catch {
         return [];
     }

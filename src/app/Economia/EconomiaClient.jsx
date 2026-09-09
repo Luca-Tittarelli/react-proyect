@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MacroListRow } from '@/components/cards/MacroListRow';
 import { Loading } from '@/components/LoadingAnim';
 import { ErrorComponent } from '@/components/Error';
@@ -19,10 +19,13 @@ const TABS = [
     { key: 'otrosIndices',       label: 'Otros índices',     chart: { type: 'line', duration: 'month' } },
 ];
 
+const macroBatchCache = {};
+
 export default function EconomiaClient({ initialVariables, initialPBI }) {
     const { variables, variablesStatus } = useMacro(initialVariables);
     const { pbiData, pbiStatus } = usePBI(initialPBI);
     const [activeTab, setActiveTab] = useState('pbi');
+    const [batchHistory, setBatchHistory] = useState(macroBatchCache);
 
     const filter = (categorie) =>
         variables?.filter(item => categorie.includes(item.idVariable)) || [];
@@ -32,6 +35,37 @@ export default function EconomiaClient({ initialVariables, initialPBI }) {
 
     const currentTab = TABS.find(t => t.key === activeTab);
     const currentData = filter(categories[activeTab] || []);
+
+    // Batch fetch historical data for active tab variables
+    useEffect(() => {
+        if (activeTab === 'pbi') return;
+
+        const targetItems = activeTab === 'otros' ? notIncludes : currentData;
+        const targetIds = targetItems.map(item => item.idVariable);
+        if (targetIds.length === 0) return;
+
+        const missingIds = targetIds.filter(id => !macroBatchCache[id]);
+        if (missingIds.length === 0) {
+            setBatchHistory(prev => ({ ...prev, ...macroBatchCache }));
+            return;
+        }
+
+        const duration = currentTab?.chart?.duration || 'month';
+        const fetchBatch = async () => {
+            try {
+                const res = await fetch(`/api/macro-history?ids=${missingIds.join(',')}&duration=${duration}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    Object.assign(macroBatchCache, data);
+                    setBatchHistory(prev => ({ ...prev, ...data }));
+                }
+            } catch (err) {
+                console.error("Error fetching batch macro history:", err);
+            }
+        };
+
+        fetchBatch();
+    }, [activeTab, variables]);
 
     return (
         <main className="min-h-screen pt-14 pb-16 md:pb-12">
@@ -140,6 +174,8 @@ export default function EconomiaClient({ initialVariables, initialPBI }) {
                                                         fecha={element.fecha}
                                                         id={element.idVariable}
                                                         chart={currentTab?.chart || { type: 'line', duration: 'month' }}
+                                                        historyData={batchHistory[element.idVariable]?.history}
+                                                        rawDiff={batchHistory[element.idVariable]?.difference}
                                                     />
                                                 </div>
                                             ))}
@@ -161,6 +197,8 @@ export default function EconomiaClient({ initialVariables, initialPBI }) {
                                                 fecha={element.fecha}
                                                 id={element.idVariable}
                                                 chart={{ type: 'line', duration: 'month' }}
+                                                historyData={batchHistory[element.idVariable]?.history}
+                                                rawDiff={batchHistory[element.idVariable]?.difference}
                                             />
                                         </div>
                                     ))}

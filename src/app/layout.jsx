@@ -95,8 +95,27 @@ const websiteSchema = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`${inter.variable} ${dmMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`dark ${inter.variable} ${dmMono.variable} ${instrumentSerif.variable}`} suppressHydrationWarning>
       <head>
+        {/* Inline Theme Initializer: prevents theme flash before React hydrates */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){
+              try {
+                var saved = localStorage.getItem('theme');
+                if (saved === 'light') {
+                  document.documentElement.classList.remove('dark');
+                } else if (saved === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+                  document.documentElement.classList.remove('dark');
+                } else {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch(e) {}
+            })();`,
+          }}
+        />
         {/* Ahrefs Analytics (Optimized using next/script) */}
         <Script
           src="https://analytics.ahrefs.com/analytics.js"

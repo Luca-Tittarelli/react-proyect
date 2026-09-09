@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/hooks/useTheme';
 import { TechnicalAnalysis, MiniChart, CompanyProfile, FundamentalData, Timeline, SymbolInfo } from 'react-ts-tradingview-widgets';
+import { TradingViewContainer } from '@/components/TradingViewContainer';
 
 const CATEGORIES = [
     {
@@ -103,19 +104,31 @@ export default function EmpresasClient() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
                         <div className="col-span-1 lg:col-span-12 rounded-[24px] overflow-hidden" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
-                            <SymbolInfo symbol={tvSymbol} colorTheme={theme} width="100%" locale="es" isTransparent />
+                            <TradingViewContainer minHeight="160px">
+                                {(activeTheme) => (
+                                    <SymbolInfo key={`sym-${tvSymbol}-${activeTheme}`} symbol={tvSymbol} colorTheme={activeTheme} width="100%" locale="es" isTransparent />
+                                )}
+                            </TradingViewContainer>
                         </div>
 
                         <div className="col-span-1 lg:col-span-8 flex flex-col gap-5">
                             <div className="rounded-[24px] overflow-hidden p-2 transition-all hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                                 <div className="h-[300px] w-full">
-                                    <CompanyProfile symbol={tvSymbol} colorTheme={theme} width="100%" height="100%" locale="es" isTransparent />
+                                    <TradingViewContainer height="300px">
+                                        {(activeTheme) => (
+                                            <CompanyProfile key={`profile-${tvSymbol}-${activeTheme}`} symbol={tvSymbol} colorTheme={activeTheme} width="100%" height="100%" locale="es" isTransparent />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
 
                             <div className="rounded-[24px] overflow-hidden p-2 transition-all hover:shadow-md" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                                 <div className="h-[450px] w-full">
-                                    <FundamentalData symbol={tvSymbol} colorTheme={theme} width="100%" height="100%" locale="es" isTransparent displayMode="compact" />
+                                    <TradingViewContainer height="450px">
+                                        {(activeTheme) => (
+                                            <FundamentalData key={`fund-${tvSymbol}-${activeTheme}`} symbol={tvSymbol} colorTheme={activeTheme} width="100%" height="100%" locale="es" isTransparent displayMode="compact" />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
                         </div>
@@ -124,20 +137,32 @@ export default function EmpresasClient() {
                             <div className="rounded-[24px] overflow-hidden p-2" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                                 <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 ml-3 mt-2 opacity-50" style={{ color: 'var(--text-primary)' }}>Sentimiento Técnico</h4>
                                 <div className="h-[380px] w-full">
-                                    <TechnicalAnalysis symbol={tvSymbol} colorTheme={theme} width="100%" height="100%" locale="es" isTransparent />
+                                    <TradingViewContainer height="380px">
+                                        {(activeTheme) => (
+                                            <TechnicalAnalysis key={`ta-${tvSymbol}-${activeTheme}`} symbol={tvSymbol} colorTheme={activeTheme} width="100%" height="100%" locale="es" isTransparent />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
 
                             <div className="rounded-[24px] overflow-hidden p-4" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)' }}>
                                 <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3 opacity-50" style={{ color: 'var(--text-primary)' }}>Rendimiento Reciente</h4>
                                 <div className="h-[150px] w-full">
-                                    <MiniChart symbol={tvSymbol} colorTheme={theme} width="100%" height="100%" locale="es" isTransparent />
+                                    <TradingViewContainer height="150px">
+                                        {(activeTheme) => (
+                                            <MiniChart key={`mini-${tvSymbol}-${activeTheme}`} symbol={tvSymbol} colorTheme={activeTheme} width="100%" height="100%" locale="es" isTransparent />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
 
                             <div className="rounded-[24px] overflow-hidden flex-1" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', minHeight: '350px' }}>
                                 <h4 className="text-[10px] font-bold uppercase tracking-wider mb-0 p-4 pb-0 opacity-50" style={{ color: 'var(--text-primary)' }}>Noticias de la Empresa</h4>
-                                <Timeline feedMode="symbol" symbol={tvSymbol} colorTheme={theme} width="100%" height="100%" locale="es" isTransparent />
+                                <TradingViewContainer height="350px">
+                                    {(activeTheme) => (
+                                        <Timeline key={`timeline-${tvSymbol}-${activeTheme}`} feedMode="symbol" symbol={tvSymbol} colorTheme={activeTheme} width="100%" height="100%" locale="es" isTransparent />
+                                    )}
+                                </TradingViewContainer>
                             </div>
                         </div>
                     </div>

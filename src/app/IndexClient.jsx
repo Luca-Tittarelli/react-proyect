@@ -14,6 +14,7 @@ import { DenseRowItem } from "@/components/cards/DenseRowItem";
 import { MiniChart, TickerTape, MarketData } from "react-ts-tradingview-widgets";
 import { useTheme } from "@/hooks/useTheme";
 import { NewsFeed } from "@/components/news/NewsFeed";
+import { TradingViewContainer } from "@/components/TradingViewContainer";
 
 // ─── SystemStatusBar ────────────────────────────────────────────
 function SystemStatusBar({ variables, lastMacro, isLoading }) {
@@ -236,12 +237,18 @@ function LoadingDenseRow() {
     );
 }
 
-export default function IndexClient({ initialDolar, initialVariables }) {
+export default function IndexClient({ 
+    initialDolar, 
+    initialVariables, 
+    initialHistoricalMacro = null, 
+    initialHistoricalDolar = null, 
+    initialNews = null 
+}) {
     const [theme] = useTheme();
-    const [lastMacro, setLastMacro] = useState([]);
-    const [lastDolar, setLastDolar] = useState([]);
-    const [isHistoricalMacroLoading, setIsHistoricalMacroLoading] = useState(true);
-    const [isHistoricalDolarLoading, setIsHistoricalDolarLoading] = useState(true);
+    const [lastMacro, setLastMacro] = useState(initialHistoricalMacro || []);
+    const [lastDolar, setLastDolar] = useState(initialHistoricalDolar || []);
+    const [isHistoricalMacroLoading, setIsHistoricalMacroLoading] = useState(!initialHistoricalMacro || initialHistoricalMacro.length === 0);
+    const [isHistoricalDolarLoading, setIsHistoricalDolarLoading] = useState(!initialHistoricalDolar || initialHistoricalDolar.length === 0);
     const { dolar, dolarStatus } = useDolar(initialDolar);
     const { variables, variablesStatus } = useMacro(initialVariables);
 
@@ -251,7 +258,7 @@ export default function IndexClient({ initialDolar, initialVariables }) {
     const findMacro    = (id) => macroData.find(v => String(v.idVariable) === String(id));
 
     const riesgoPaisVar = findMacro('riesgo-pais');
-    const tasaVar       = findMacro(160);
+    const tasaVar       = findMacro(160) || findMacro(6);
     const baseVar       = findMacro(15);
     const inflacionVar  = findMacro(27);
     const reservasVar   = findMacro(1);
@@ -264,7 +271,7 @@ export default function IndexClient({ initialDolar, initialVariables }) {
     const findLastMacro = (id) => lastMacro.find(m => String(m.idVariable) === String(id));
 
     const rpLast        = findLastMacro('riesgo-pais');
-    const tasaLast      = findLastMacro(160);
+    const tasaLast      = findLastMacro(160) || findLastMacro(6);
     const baseLast      = findLastMacro(15);
     const inflacionLast = findLastMacro(27);
     const reservasLast  = findLastMacro(1);
@@ -278,6 +285,7 @@ export default function IndexClient({ initialDolar, initialVariables }) {
     const dolarList = dolar?.filter(d => d.casa !== 'mayorista') || [];
 
     useEffect(() => {
+        if (initialHistoricalMacro && initialHistoricalMacro.length > 0) return;
         if (variablesStatus === 'loading') return;
         if (variablesStatus === 'error' || !variables || variables.length === 0) {
             setIsHistoricalMacroLoading(false);
@@ -318,9 +326,10 @@ export default function IndexClient({ initialDolar, initialVariables }) {
         };
 
         fetchAllMacro();
-    }, [variables, variablesStatus]);
+    }, [variables, variablesStatus, initialHistoricalMacro]);
 
     useEffect(() => {
+        if (initialHistoricalDolar && initialHistoricalDolar.length > 0) return;
         if (dolarStatus === 'loading') return;
         if (dolarStatus === 'error' || !dolar || dolar.length === 0) {
             setIsHistoricalDolarLoading(false);
@@ -349,7 +358,7 @@ export default function IndexClient({ initialDolar, initialVariables }) {
         };
 
         fetchAllDolar();
-    }, [dolar, dolarStatus]);
+    }, [dolar, dolarStatus, initialHistoricalDolar]);
 
     const isLoading = 
         dolarStatus === 'loading' || 
@@ -509,8 +518,12 @@ export default function IndexClient({ initialDolar, initialVariables }) {
                                     <span className="source-badge">TradingView</span>
                                 </div>
                                 <div className="flex-1 min-h-0">
-                                    <MiniChart colorTheme={theme} width="100%" height="100%"
-                                               symbol="BCBA:IMV" locale="es" isTransparent={true} />
+                                    <TradingViewContainer minHeight="110px" className="h-full">
+                                        {(activeTheme) => (
+                                            <MiniChart colorTheme={activeTheme} width="100%" height="100%"
+                                                       symbol="BCBA:IMV" locale="es" isTransparent={true} />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
 
@@ -524,8 +537,12 @@ export default function IndexClient({ initialDolar, initialVariables }) {
                                     <span className="source-badge">TradingView</span>
                                 </div>
                                 <div className="flex-1 min-h-0">
-                                    <MiniChart colorTheme={theme} width="100%" height="100%"
-                                               symbol="BCBA:AL30" locale="es" isTransparent={true} />
+                                    <TradingViewContainer minHeight="110px" className="h-full">
+                                        {(activeTheme) => (
+                                            <MiniChart colorTheme={activeTheme} width="100%" height="100%"
+                                                       symbol="BCBA:AL30" locale="es" isTransparent={true} />
+                                        )}
+                                    </TradingViewContainer>
                                 </div>
                             </div>
                         </div>
@@ -534,32 +551,36 @@ export default function IndexClient({ initialDolar, initialVariables }) {
                     <div className="lg:col-span-4 flex flex-col gap-2">
                         <SectionHead label="Índices Globales" />
                         <div className="rounded-xl overflow-hidden flex flex-col h-full min-h-[380px]" style={{ border: '1px solid var(--border-subtle)', background: 'var(--bg-surface)' }}>
-                            <MarketData 
-                                colorTheme={theme} 
-                                width="100%" 
-                                height="100%" 
-                                locale="es" 
-                                isTransparent={true}
-                                showSymbolLogo={false}
-                                symbolsGroups={[{
-                                    name: "Principales Mercados",
-                                    originalName: "Indices",
-                                    symbols: [
-                                        { name: "AMEX:SPY", displayName: "S&P 500" },
-                                        { name: "BMFBOVESPA:IBOV", displayName: "Bovespa" },
-                                        { name: "OANDA:JP225USD", displayName: "Nikkei 225" },
-                                        { name: "SSE:000001", displayName: "Shanghai" },
-                                        { name: "BCBA:IMV", displayName: "S&P Merval" }
-                                    ]
-                                }]} 
-                            />
+                            <TradingViewContainer height="100%" minHeight="380px" className="flex-1">
+                                {(activeTheme) => (
+                                    <MarketData 
+                                        colorTheme={activeTheme} 
+                                        width="100%" 
+                                        height="100%" 
+                                        locale="es" 
+                                        isTransparent={true}
+                                        showSymbolLogo={false}
+                                        symbolsGroups={[{
+                                            name: "Principales Mercados",
+                                            originalName: "Indices",
+                                            symbols: [
+                                                { name: "AMEX:SPY", displayName: "S&P 500" },
+                                                { name: "BMFBOVESPA:IBOV", displayName: "Bovespa" },
+                                                { name: "OANDA:JP225USD", displayName: "Nikkei 225" },
+                                                { name: "SSE:000001", displayName: "Shanghai" },
+                                                { name: "BCBA:IMV", displayName: "S&P Merval" }
+                                            ]
+                                        }]} 
+                                    />
+                                )}
+                            </TradingViewContainer>
                         </div>
                     </div>
                 </div>
             </section>
 
             <div className="mt-2">
-                <NewsFeed />
+                <NewsFeed initialNews={initialNews} />
             </div>
         </main>
     );

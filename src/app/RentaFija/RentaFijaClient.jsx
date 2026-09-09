@@ -5,6 +5,7 @@ import { MarketOverview } from "react-ts-tradingview-widgets";
 import { useTheme } from '@/hooks/useTheme';
 import { BOND_DATA, calculateBondMetrics } from '@/utils/bondCalculator';
 import Link from 'next/link';
+import { TradingViewContainer } from '@/components/TradingViewContainer';
 
 export default function RentaFijaClient() {
     const [theme] = useTheme();
@@ -52,16 +53,20 @@ export default function RentaFijaClient() {
                             className="rounded-[12px] overflow-hidden"
                             style={{
                                 border: '1px solid var(--border-subtle)',
+                                background: 'var(--bg-surface)',
                                 height: '600px',
                             }}
                         >
-                            <MarketOverview
-                                colorTheme={theme}
-                                height="100%"
-                                width="100%"
-                                showFloatingTooltip
-                                dateRange="12M"
-                                locale="es"
+                            <TradingViewContainer height="600px">
+                                {(activeTheme) => (
+                                    <MarketOverview
+                                        colorTheme={activeTheme}
+                                        isTransparent={true}
+                                        height="100%"
+                                        width="100%"
+                                        showFloatingTooltip
+                                        dateRange="12M"
+                                        locale="es"
                                 tabs={[
                                     {
                                         title: "Soberanos USD",
@@ -99,7 +104,9 @@ export default function RentaFijaClient() {
                                     },
                                 ]}
                             />
-                        </div>
+                        )}
+                        </TradingViewContainer>
+                    </div>
                         
                         <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                             Datos provistos vía TradingView.

@@ -65,26 +65,47 @@ function isRecent(dateStr) {
     return ageDays <= MAX_AGE_DAYS;
 }
 
-function parseXMLFeed(xmlText) {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlText, 'application/xml');
+export function parseXMLFeed(xmlText) {
+    if (typeof DOMParser !== 'undefined') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(xmlText, 'application/xml');
 
-    const parseError = doc.querySelector('parsererror');
-    if (parseError) throw new Error('XML parse error');
+        const parseError = doc.querySelector('parsererror');
+        if (parseError) throw new Error('XML parse error');
 
-    const items = Array.from(doc.querySelectorAll('item'));
-    return items.map(item => {
-        const title = item.querySelector('title')?.textContent || '';
-        const link = item.querySelector('link')?.textContent ||
-                     item.querySelector('guid')?.textContent || '#';
-        const pubDate = item.querySelector('pubDate')?.textContent || '';
-        const source = item.querySelector('source')?.textContent || 'Google News';
+        const items = Array.from(doc.querySelectorAll('item'));
+        return items.map(item => {
+            const title = item.querySelector('title')?.textContent || '';
+            const link = item.querySelector('link')?.textContent ||
+                         item.querySelector('guid')?.textContent || '#';
+            const pubDate = item.querySelector('pubDate')?.textContent || '';
+            const source = item.querySelector('source')?.textContent || 'Google News';
 
-        return { title, link, pubDate, source };
-    });
+            return { title, link, pubDate, source };
+        });
+    }
+
+    // Node.js SSR / API route fallback using regex
+    const items = [];
+    const itemMatches = xmlText.match(/<item[\s\S]*?<\/item>/gi) || [];
+    for (const itemXml of itemMatches) {
+        const titleMatch = itemXml.match(/<title>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/title>/i);
+        const linkMatch = itemXml.match(/<link>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/link>/i);
+        const guidMatch = itemXml.match(/<guid[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/guid>/i);
+        const pubDateMatch = itemXml.match(/<pubDate>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/pubDate>/i);
+        const sourceMatch = itemXml.match(/<source[^>]*>(?:<!\[CDATA\[([\s\S]*?)\]\]>|([\s\S]*?))<\/source>/i);
+
+        const title = (titleMatch ? (titleMatch[1] ?? titleMatch[2]) : '').trim();
+        const link = (linkMatch ? (linkMatch[1] ?? linkMatch[2]) : (guidMatch ? (guidMatch[1] ?? guidMatch[2]) : '#')).trim();
+        const pubDate = (pubDateMatch ? (pubDateMatch[1] ?? pubDateMatch[2]) : '').trim();
+        const source = (sourceMatch ? (sourceMatch[1] ?? sourceMatch[2]) : 'Google News').trim();
+
+        items.push({ title, link, pubDate, source });
+    }
+    return items;
 }
 
-function timeAgo(dateStr) {
+export function timeAgo(dateStr) {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     if (isNaN(date)) return '';
@@ -95,23 +116,9 @@ function timeAgo(dateStr) {
     return `hace ${Math.floor(diff / 86400)}d`;
 }
 
-/**
- * Fetch financial news via the Vite dev proxy (/gnews-rss -> news.google.com).
- * The `when:3d` parameter tells Google News to only return articles from the last 3 days.
- * Client-side MAX_AGE_DAYS filter acts as an additional safety net.
- */
-export async function fetchFinancialNews() {
-    // when:3d tells Google News to restrict results to the last 3 days
-    const query = encodeURIComponent('BCRA dólar argentina economía inflación bonos when:3d');
-    const proxyUrl = `/gnews-rss/rss/search?q=${query}&hl=es-419&gl=AR&ceid=AR%3Aes-419`;
-
-    const res = await fetch(proxyUrl);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const xml = await res.text();
-    const raw = parseXMLFeed(xml);
-
-    const filtered = raw
+export function formatNewsFromXml(xmlText) {
+    const raw = parseXMLFeed(xmlText);
+    return raw
         .filter(item => isFinancialNews(item.title) && isRecent(item.pubDate))
         .slice(0, 12)
         .map(item => ({
@@ -123,6 +130,38 @@ export async function fetchFinancialNews() {
             source: item.source,
             category: detectCategory(item.title),
         }));
+}
 
-    return filtered;
+/**
+ * Fetch financial news.
+ * On server: queries Google News RSS directly with ISR caching.
+ * On client: queries /api/news.
+ */
+export async function fetchFinancialNews() {
+    const isServer = typeof window === 'undefined';
+    const query = encodeURIComponent('BCRA dólar argentina economía inflación bonos when:3d');
+
+    if (isServer) {
+        const url = `https://news.google.com/rss/search?q=${query}&hl=es-419&gl=AR&ceid=AR%3Aes-419`;
+        const res = await fetch(url, { next: { revalidate: 300 } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const xml = await res.text();
+        return formatNewsFromXml(xml);
+    }
+
+    // Client-side: fetch from cached Next.js API route
+    try {
+        const res = await fetch('/api/news');
+        if (res.ok) {
+            return await res.json();
+        }
+    } catch {
+        // Fallback to proxy if API route fails
+    }
+
+    const proxyUrl = `/gnews-rss/rss/search?q=${query}&hl=es-419&gl=AR&ceid=AR%3Aes-419`;
+    const res = await fetch(proxyUrl);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const xml = await res.text();
+    return formatNewsFromXml(xml);
 }

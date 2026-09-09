@@ -127,7 +127,7 @@ export default async function Page({ params }) {
                 </nav>
 
                 {/* Client interactivity component (chart, updates, filters) */}
-                <EconomiaDetalleClient id={id} />
+                <EconomiaDetalleClient id={id} meta={meta} />
 
                 {/* Rich text section (Server-rendered, indexable!) */}
                 {meta.faqs && meta.faqs.length > 0 && (

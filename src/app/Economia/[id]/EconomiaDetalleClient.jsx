@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useMemo } from "react";
-import { useMacro } from '@/hooks/useMacro';
 import { fetchData } from "@/utils/Fetch";
 import { RiesgoPaisHistoricoAPI, variableAPI } from "@/apis";
 import { Loading } from "@/components/LoadingAnim";
@@ -20,23 +19,14 @@ const PERIODS = [
     { label: '5A', value: '5Y' },
 ];
 
-export default function EconomiaDetalleClient({ id }) {
-    const { variables, variablesStatus } = useMacro();
+export default function EconomiaDetalleClient({ id, meta = null }) {
     const [theme] = useTheme();
-    const [variable, setVariable] = useState(null);
     const [fullChartData, setFullChartData] = useState([]);
     const [chartDataStatus, setChartDataStatus] = useState('loading');
     const [selected, setSelected] = useState('1M');
 
     const getLabels = data => data.map(d => d.fecha);
     const getValues = data => data.map(d => d.valor);
-
-    useEffect(() => {
-        if (variables && variables.length > 0) {
-            const filteredData = variables.find(i => String(i.idVariable) === String(id));
-            setVariable(filteredData);
-        }
-    }, [variables, id]);
 
     useEffect(() => {
         const fetching = async () => {
@@ -88,7 +78,11 @@ export default function EconomiaDetalleClient({ id }) {
     const chartColor = isPositive ? '#00C853' : isNegative ? '#FF1744' : '#8B98A5';
     const diffColor = isPositive ? 'var(--positive)' : isNegative ? 'var(--negative)' : 'var(--text-tertiary)';
 
-    const isLoading = chartDataStatus === 'loading' || variablesStatus === 'loading';
+    const displayTitle = meta?.title ? meta.title.split('—')[0].trim() : '—';
+    const displaySubtitle = meta?.dataset?.variableMeasured || meta?.description || null;
+    const latestDate = fullChartData.length > 0 ? fullChartData[fullChartData.length - 1].fecha : '—';
+
+    const isLoading = chartDataStatus === 'loading';
 
     if (isLoading) {
         return <Loading />;
@@ -110,11 +104,11 @@ export default function EconomiaDetalleClient({ id }) {
                             className="text-xl sm:text-2xl font-bold tracking-tight mb-1"
                             style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-display)', fontStyle: 'italic' }}
                         >
-                            {variable?.descripcion?.split('(')[0]?.trim() || '—'}
+                            {displayTitle}
                         </h1>
-                        {variable?.descripcion?.includes('(') && (
-                            <p className="text-sm capitalize" style={{ color: 'var(--text-secondary)' }}>
-                                {variable.descripcion.split('(')[1]?.replace(/[()]/g, '')}
+                        {displaySubtitle && (
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                {displaySubtitle}
                             </p>
                         )}
                     </div>
@@ -178,7 +172,7 @@ export default function EconomiaDetalleClient({ id }) {
             {/* Metadata */}
             <div className="flex items-center justify-between mt-4 px-1">
                 <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    Última actualización: {variable?.fecha || '—'}
+                    Última actualización: {latestDate}
                 </p>
                 <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                     Fuente: {id === 'riesgo-pais' || id === '44' ? 'ArgentinaDatos API' : 'BCRA'}
